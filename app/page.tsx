@@ -4,71 +4,26 @@ import React, { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, Activity, ArrowUpRight, ArrowDownRight, Sparkles } from 'lucide-react';
 
-// Erweiterte historische Daten (Tage/Wochen-Basis für echten Kursverlauf)
-const ASSET_DATA: Record<string, { name: string; price: number; trend: number; vol: number; maxDD: number; history: { date: string; price: number }[] }> = {
-  "NVDA": { 
-    name: "NVIDIA Corp.", 
-    price: 135.50, 
-    trend: 0.65, 
-    vol: 0.45, 
-    maxDD: -0.35,
-    history: [
-      { date: 'Mai 24', price: 90.0 }, { date: 'Jun 24', price: 95.2 }, { date: 'Jul 24', price: 108.4 }, 
-      { date: 'Aug 24', price: 115.0 }, { date: 'Sep 24', price: 120.5 }, { date: 'Okt 24', price: 128.0 }, { date: 'Heute', price: 135.50 }
-    ]
-  },
-  "AAPL": { 
-    name: "Apple Inc.", 
-    price: 228.20, 
-    trend: 0.22, 
-    vol: 0.20, 
-    maxDD: -0.18,
-    history: [
-      { date: 'Mai 24', price: 195.0 }, { date: 'Jun 24', price: 210.0 }, { date: 'Jul 24', price: 215.5 }, 
-      { date: 'Aug 24', price: 220.0 }, { date: 'Sep 24', price: 222.1 }, { date: 'Okt 24', price: 225.0 }, { date: 'Heute', price: 228.20 }
-    ]
-  },
-  "BTC-USD": { 
-    name: "Bitcoin", 
-    price: 92400.00, 
-    trend: 0.85, 
-    vol: 0.65, 
-    maxDD: -0.55,
-    history: [
-      { date: 'Mai 24', price: 58000 }, { date: 'Jun 24', price: 64000 }, { date: 'Jul 24', price: 67500 }, 
-      { date: 'Aug 24', price: 61000 }, { date: 'Sep 24', price: 74000 }, { date: 'Okt 24', price: 85000 }, { date: 'Heute', price: 92400 }
-    ]
-  },
-  "TSLA": { 
-    name: "Tesla Inc.", 
-    price: 245.80, 
-    trend: 0.15, 
-    vol: 0.55, 
-    maxDD: -0.48,
-    history: [
-      { date: 'Mai 24', price: 170.0 }, { date: 'Jun 24', price: 180.0 }, { date: 'Jul 24', price: 210.0 }, 
-      { date: 'Aug 24', price: 225.0 }, { date: 'Sep 24', price: 240.0 }, { date: 'Okt 24', price: 235.0 }, { date: 'Heute', price: 245.80 }
-    ]
-  }
+const ASSET_DATA: Record<string, { name: string; price: number; trend: number; vol: number; maxDD: number }> = {
+  "NVDA": { name: "NVIDIA Corp.", price: 135.50, trend: 0.65, vol: 0.45, maxDD: -0.35 },
+  "AAPL": { name: "Apple Inc.", price: 228.20, trend: 0.22, vol: 0.20, maxDD: -0.18 },
+  "BTC-USD": { name: "Bitcoin", price: 92400.00, trend: 0.85, vol: 0.65, maxDD: -0.55 },
+  "TSLA": { name: "Tesla Inc.", price: 245.80, trend: 0.15, vol: 0.55, maxDD: -0.48 }
 };
 
 export default function StoxaApp() {
   const [ticker, setTicker] = useState("NVDA");
-  const [timeframe, setTimeframe] = useState(12); // Monate für die Prognose
+  const [timeframe, setTimeframe] = useState(12);
 
   const asset = ASSET_DATA[ticker.toUpperCase()] || { 
     name: ticker.toUpperCase(), 
     price: 100.00, 
     trend: 0.25, 
     vol: 0.30, 
-    maxDD: -0.25,
-    history: [
-      { date: 'Vor 6M', price: 80 }, { date: 'Vor 5M', price: 85 }, { date: 'Vor 4M', price: 90 }, 
-      { date: 'Vor 3M', price: 95 }, { date: 'Vor 2M', price: 98 }, { date: 'Vor 1M', price: 99 }, { date: 'Heute', price: 100 }
-    ]
+    maxDD: -0.25 
   };
 
-  // Mathematische Szenario-Berechnung basierend auf dem Horizon-Slider
+  // Szenario-Berechnung
   const timeFactor = timeframe / 12.0;
   const bullTarget = asset.price * (1 + (Math.max(asset.trend, 0.15) * timeFactor) + (asset.vol * 0.4 * Math.sqrt(timeFactor)));
   const baseTarget = asset.price * (1 + (Math.max(asset.trend, 0.05) * timeFactor));
@@ -78,42 +33,42 @@ export default function StoxaApp() {
   const basePct = ((baseTarget - asset.price) / asset.price) * 100;
   const bearPct = ((bearTarget - asset.price) / asset.price) * 100;
 
-  // Dynamische Generierung von Zwischenpunkten für den Prognose-Zeitraum (skaliert mit dem Slider)
-  const projectionSteps = [];
-  const midMonths = Math.max(1, Math.floor(timeframe / 2));
+  // Lückenlose Generierung von Historie (6 Monate zurück) bis Zukunft (slider-abhängig)
+  const chartData = [];
   
-  // Halbzeit-Punkt der Prognose
-  const halfBull = asset.price + (bullTarget - asset.price) * 0.5;
-  const halfBase = asset.price + (baseTarget - asset.price) * 0.5;
-  const halfBear = asset.price + (bearTarget - asset.price) * 0.5;
+  // 6 Historische Monate generieren
+  for (let i = 6; i > 0; i--) {
+    const historicalPrice = asset.price * (1 - (asset.trend * 0.05 * i));
+    chartData.push({
+      label: `-${i}M`,
+      Historical: Number(historicalPrice.toFixed(2)),
+      Bull: null,
+      Base: null,
+      Bear: null
+    });
+  }
 
-  projectionSteps.push({
-    date: `+${midMonths}M`,
-    Historical: null,
-    Bull: halfBull,
-    Base: halfBase,
-    Bear: halfBear
+  // Startpunkt "Heute"
+  chartData.push({
+    label: 'Heute',
+    Historical: asset.price,
+    Bull: asset.price,
+    Base: asset.price,
+    Bear: asset.price
   });
 
-  projectionSteps.push({
-    date: `+${timeframe}M (Ziel)`,
-    Historical: null,
-    Bull: bullTarget,
-    Base: baseTarget,
-    Bear: bearTarget
-  });
-
-  // Kombinierter Chart-Datenstrom (Historie nahtlos verbunden mit Prognose)
-  const historyMapped = asset.history.map((h, index) => ({
-    date: h.date,
-    Historical: h.price,
-    // Startpunkt für die Prognose-Linien exakt am letzten historischen Punkt ("Heute")
-    Bull: index === asset.history.length - 1 ? h.price : null,
-    Base: index === asset.history.length - 1 ? h.price : null,
-    Bear: index === asset.history.length - 1 ? h.price : null,
-  }));
-
-  const chartData = [...historyMapped, ...projectionSteps];
+  // Dynamische Zukunftsschritte (Monat für Monat je nach Slider)
+  const stepInterval = Math.max(1, Math.floor(timeframe / 6));
+  for (let m = stepInterval; m <= timeframe; m += stepInterval) {
+    const progress = m / timeframe;
+    chartData.push({
+      label: `+${m}M`,
+      Historical: null,
+      Bull: Number((asset.price + (bullTarget - asset.price) * progress).toFixed(2)),
+      Base: Number((asset.price + (baseTarget - asset.price) * progress).toFixed(2)),
+      Bear: Number((asset.price + (bearTarget - asset.price) * progress).toFixed(2)),
+    });
+  }
 
   return (
     <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] font-sans selection:bg-blue-500/20">
@@ -130,7 +85,7 @@ export default function StoxaApp() {
           </div>
         </div>
         <div className="text-xs font-medium px-3 py-1.5 rounded-full bg-white border border-black/[0.08] text-[#1d1d1f] shadow-sm">
-          v2.2 Pro Engine
+          v2.3 Pro Light Mode
         </div>
       </header>
 
@@ -190,7 +145,7 @@ export default function StoxaApp() {
         <div className="bg-white border border-black/[0.06] rounded-2xl px-6 py-5 flex items-center justify-between shadow-sm">
           <div>
             <h2 className="text-xl font-bold text-[#1d1d1f]">{asset.name} <span className="text-[#86868b] font-normal text-base">({ticker.toUpperCase()})</span></h2>
-            <p className="text-xs text-[#86868b]">Historischer Kursverlauf & Skalierte Prognose</p>
+            <p className="text-xs text-[#86868b]">Nahtloser Kursverlauf & Skalierter Simulationskorridor</p>
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-[#1d1d1f]">${asset.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
@@ -200,7 +155,7 @@ export default function StoxaApp() {
           </div>
         </div>
 
-        {/* Chart Section (Proportionally Scaled) */}
+        {/* Chart Section */}
         <div className="bg-white border border-black/[0.06] rounded-3xl p-8 shadow-xl shadow-black/[0.02]">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-sm font-semibold uppercase tracking-wider text-[#86868b]">Performance & Szenario-Korridor</h3>
@@ -215,15 +170,15 @@ export default function StoxaApp() {
           <div className="h-[360px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
-                <XAxis dataKey="date" stroke="#86868b" fontSize={12} tickLine={false} axisLine={false} />
+                <XAxis dataKey="label" stroke="#86868b" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis stroke="#86868b" fontSize={12} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#ffffff', borderColor: 'rgba(0,0,0,0.1)', borderRadius: '12px', color: '#1d1d1f', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
                 />
-                <Line type="monotone" dataKey="Historical" stroke="#1d1d1f" strokeWidth={3} dot={{ r: 3 }} connectNulls />
-                <Line type="monotone" dataKey="Bull" stroke="#10b981" strokeWidth={3} strokeDasharray="5 5" dot={{ r: 4 }} connectNulls />
-                <Line type="monotone" dataKey="Base" stroke="#2563eb" strokeWidth={3} strokeDasharray="5 5" dot={{ r: 4 }} connectNulls />
-                <Line type="monotone" dataKey="Bear" stroke="#f43f5e" strokeWidth={3} strokeDasharray="5 5" dot={{ r: 4 }} connectNulls />
+                <Line type="monotone" dataKey="Historical" stroke="#1d1d1f" strokeWidth={3} dot={false} connectNulls />
+                <Line type="monotone" dataKey="Bull" stroke="#10b981" strokeWidth={3} strokeDasharray="4 4" dot={false} connectNulls />
+                <Line type="monotone" dataKey="Base" stroke="#2563eb" strokeWidth={3} strokeDasharray="4 4" dot={false} connectNulls />
+                <Line type="monotone" dataKey="Bear" stroke="#f43f5e" strokeWidth={3} strokeDasharray="4 4" dot={false} connectNulls />
               </LineChart>
             </ResponsiveContainer>
           </div>

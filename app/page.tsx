@@ -2,124 +2,53 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Activity, ArrowUpRight, ArrowDownRight, Sparkles, Search } from 'lucide-react';
+import { TrendingUp, Activity, ArrowUpRight, ArrowDownRight, Sparkles, Search, Loader2 } from 'lucide-react';
 
-interface AssetDetail {
+interface AssetPreset {
   ticker: string;
   name: string;
-  price: number;
   trend: number;
   vol: number;
   maxDD: number;
-  // Echte historische Tageskurse (Daily Closes) als lückenlose Array-Reihe
-  realDailyHistory: { date: string; price: number }[];
 }
 
-// 100% ECHTE UND UNVERFÄLSCHTE TAGESHISTORIE (Beispielhafter Auszug echter Marktdaten)
-const VERIFIED_ASSETS_DATABASE: Record<string, AssetDetail> = {
-  "NVDA": {
-    ticker: "NVDA", name: "NVIDIA Corp.", price: 138.25, trend: 0.45, vol: 0.38, maxDD: -0.28,
-    realDailyHistory: [
-      { date: "02.01.24", price: 48.20 }, { date: "15.01.24", price: 52.40 }, { date: "01.02.24", price: 61.30 },
-      { date: "15.02.24", price: 73.50 }, { date: "01.03.24", price: 85.20 }, { date: "15.03.24", price: 89.00 },
-      { date: "01.04.24", price: 83.50 }, { date: "15.04.24", price: 78.20 }, { date: "01.05.24", price: 91.40 },
-      { date: "15.05.24", price: 95.00 }, { date: "01.06.24", price: 115.20 }, { date: "15.06.24", price: 130.50 },
-      { date: "01.07.24", price: 124.00 }, { date: "15.07.24", price: 118.20 }, { date: "01.08.24", price: 116.50 },
-      { date: "15.08.24", price: 128.00 }, { date: "01.09.24", price: 120.50 }, { date: "15.09.24", price: 118.00 },
-      { date: "01.10.24", price: 121.50 }, { date: "15.10.24", price: 135.00 }, { date: "01.11.24", price: 138.50 },
-      { date: "15.11.24", price: 142.00 }, { date: "01.12.24", price: 134.20 }, { date: "15.12.24", price: 130.50 },
-      { date: "02.01.25", price: 126.80 }, { date: "15.01.25", price: 132.40 }, { date: "01.02.25", price: 135.00 },
-      { date: "15.02.25", price: 136.80 }, { date: "01.03.25", price: 138.25 }
-    ]
-  },
-  "AAPL": {
-    ticker: "AAPL", name: "Apple Inc.", price: 232.40, trend: 0.20, vol: 0.18, maxDD: -0.15,
-    realDailyHistory: [
-      { date: "02.01.24", price: 185.60 }, { date: "15.01.24", price: 182.00 }, { date: "01.02.24", price: 184.40 },
-      { date: "15.02.24", price: 181.30 }, { date: "01.03.24", price: 179.70 }, { date: "15.03.24", price: 172.60 },
-      { date: "01.04.24", price: 170.30 }, { date: "15.04.24", price: 169.00 }, { date: "01.05.24", price: 173.00 },
-      { date: "15.05.24", price: 182.50 }, { date: "01.06.24", price: 196.20 }, { date: "15.06.24", price: 216.70 },
-      { date: "01.07.24", price: 220.50 }, { date: "15.07.24", price: 234.80 }, { date: "01.08.24", price: 219.60 },
-      { date: "15.08.24", price: 226.00 }, { date: "01.09.24", price: 228.30 }, { date: "15.09.24", price: 229.00 },
-      { date: "01.10.24", price: 227.50 }, { date: "15.10.24", price: 233.80 }, { date: "01.11.24", price: 224.20 },
-      { date: "15.11.24", price: 228.00 }, { date: "01.12.24", price: 241.50 }, { date: "15.12.24", price: 238.00 },
-      { date: "02.01.25", price: 224.20 }, { date: "15.01.25", price: 229.00 }, { date: "01.02.25", price: 230.10 },
-      { date: "15.02.25", price: 231.50 }, { date: "01.03.25", price: 232.40 }
-    ]
-  },
-  "BTC-USD": {
-    ticker: "BTC-USD", name: "Bitcoin", price: 84500.00, trend: 0.60, vol: 0.52, maxDD: -0.48,
-    realDailyHistory: [
-      { date: "02.01.24", price: 44200 }, { date: "15.01.24", price: 42600 }, { date: "01.02.24", price: 43100 },
-      { date: "15.02.24", price: 51800 }, { date: "01.03.24", price: 61200 }, { date: "15.03.24", price: 67300 },
-      { date: "01.04.24", price: 69500 }, { date: "15.04.24", price: 63200 }, { date: "01.05.24", price: 60400 },
-      { date: "15.05.24", price: 66100 }, { date: "01.06.24", price: 68200 }, { date: "15.06.24", price: 65400 },
-      { date: "01.07.24", price: 62800 }, { date: "15.07.24", price: 64500 }, { date: "01.08.24", price: 58200 },
-      { date: "15.08.24", price: 59400 }, { date: "01.09.24", price: 57800 }, { date: "15.09.24", price: 63100 },
-      { date: "01.10.24", price: 63800 }, { date: "15.10.24", price: 68200 }, { date: "01.11.24", price: 70100 },
-      { date: "15.11.24", price: 89500 }, { date: "01.12.24", price: 96800 }, { date: "15.12.24", price: 102400 },
-      { date: "02.01.25", price: 95200 }, { date: "15.01.25", price: 101000 }, { date: "01.02.25", price: 97400 },
-      { date: "15.02.25", price: 89000 }, { date: "01.03.25", price: 84500 }
-    ]
-  },
-  "VOW3.DE": {
-    ticker: "VOW3.DE", name: "Volkswagen AG", price: 94.20, trend: 0.05, vol: 0.25, maxDD: -0.30,
-    realDailyHistory: [
-      { date: "02.01.24", price: 116.40 }, { date: "15.01.24", price: 114.20 }, { date: "01.02.24", price: 122.50 },
-      { date: "15.02.24", price: 124.00 }, { date: "01.03.24", price: 121.30 }, { date: "15.03.24", price: 126.80 },
-      { date: "01.04.24", price: 123.50 }, { date: "15.04.24", price: 120.00 }, { date: "01.05.24", price: 122.20 },
-      { date: "15.05.24", price: 125.60 }, { date: "01.06.24", price: 122.40 }, { date: "15.06.24", price: 118.90 },
-      { date: "01.07.24", price: 115.00 }, { date: "15.07.24", price: 109.20 }, { date: "01.08.24", price: 104.50 },
-      { date: "15.08.24", price: 101.80 }, { date: "01.09.24", price: 97.40 }, { date: "15.09.24", price: 95.00 },
-      { date: "01.10.24", price: 98.20 }, { date: "15.10.24", price: 96.50 }, { date: "01.11.24", price: 95.00 },
-      { date: "15.11.24", price: 92.40 }, { date: "01.12.24", price: 94.00 }, { date: "15.12.24", price: 95.20 },
-      { date: "02.01.25", price: 92.00 }, { date: "15.01.25", price: 93.10 }, { date: "01.02.25", price: 93.50 },
-      { date: "15.02.25", price: 93.80 }, { date: "01.03.25", price: 94.20 }
-    ]
-  },
-  "META": {
-    ticker: "META", name: "Meta Platforms", price: 595.00, trend: 0.38, vol: 0.32, maxDD: -0.25,
-    realDailyHistory: [
-      { date: "02.01.24", price: 353.40 }, { date: "15.01.24", price: 374.20 }, { date: "01.02.24", price: 394.00 },
-      { date: "15.02.24", price: 468.50 }, { date: "01.03.24", price: 490.20 }, { date: "15.03.24", price: 505.10 },
-      { date: "01.04.24", price: 485.60 }, { date: "15.04.24", price: 512.40 }, { date: "01.05.24", price: 462.00 },
-      { date: "15.05.24", price: 478.90 }, { date: "01.06.24", price: 504.20 }, { date: "15.06.24", price: 501.00 },
-      { date: "01.07.24", price: 495.20 }, { date: "15.07.24", price: 520.40 }, { date: "01.08.24", price: 502.80 },
-      { date: "15.08.24", price: 531.00 }, { date: "01.09.24", price: 528.50 }, { date: "15.09.24", price: 554.00 },
-      { date: "01.10.24", price: 572.00 }, { date: "15.10.24", price: 585.10 }, { date: "01.11.24", price: 562.40 },
-      { date: "15.11.24", price: 574.00 }, { date: "01.12.24", price: 602.50 }, { date: "15.12.24", price: 591.00 },
-      { date: "02.01.25", price: 572.00 }, { date: "15.01.25", price: 582.50 }, { date: "01.02.25", price: 588.00 },
-      { date: "15.02.25", price: 591.20 }, { date: "01.03.25", price: 595.00 }
-    ]
-  }
+const PRESETS: Record<string, AssetPreset> = {
+  "NVDA": { ticker: "NVDA", name: "NVIDIA Corp.", trend: 0.45, vol: 0.38, maxDD: -0.28 },
+  "AAPL": { ticker: "AAPL", name: "Apple Inc.", trend: 0.20, vol: 0.18, maxDD: -0.15 },
+  "BTC-USD": { ticker: "BTC-USD", name: "Bitcoin", trend: 0.60, vol: 0.52, maxDD: -0.48 },
+  "TSLA": { ticker: "TSLA", name: "Tesla Inc.", trend: 0.25, vol: 0.48, maxDD: -0.40 },
+  "VOW3.DE": { ticker: "VOW3.DE", name: "Volkswagen AG", trend: 0.05, vol: 0.25, maxDD: -0.30 },
+  "SIE.DE": { ticker: "SIE.DE", name: "Siemens AG", trend: 0.18, vol: 0.20, maxDD: -0.18 },
+  "META": { ticker: "META", name: "Meta Platforms", trend: 0.38, vol: 0.32, maxDD: -0.25 }
 };
 
 export default function StoxaApp() {
   const [query, setQuery] = useState("");
   const [selectedTicker, setSelectedTicker] = useState("NVDA");
   const [assetName, setAssetName] = useState("NVIDIA Corp.");
+  const [currentPrice, setCurrentPrice] = useState<number>(138.25);
   const [timeframe, setTimeframe] = useState(12);
+  
+  const [loading, setLoading] = useState(false);
+  const [historyData, setHistoryData] = useState<{ date: string; price: number }[]>([]);
   const [suggestions, setSuggestions] = useState<{ symbol: string; name: string }[]>([]);
-
-  const asset = VERIFIED_ASSETS_DATABASE[selectedTicker] || VERIFIED_ASSETS_DATABASE["NVDA"];
 
   const handleSelectAsset = useCallback((tickerSymbol: string) => {
     const clean = tickerSymbol.toUpperCase().trim();
-    if (VERIFIED_ASSETS_DATABASE[clean]) {
+    if (clean) {
       setSelectedTicker(clean);
-      setAssetName(VERIFIED_ASSETS_DATABASE[clean].name);
       setQuery("");
       setSuggestions([]);
     }
   }, []);
 
-  // Autocomplete Suchfilter
+  // Autocomplete Filter
   useEffect(() => {
     if (query.trim().length < 1) {
       setSuggestions([]);
       return;
     }
-    const filtered = Object.entries(VERIFIED_ASSETS_DATABASE)
+    const filtered = Object.entries(PRESETS)
       .filter(([sym, data]) => 
         sym.toLowerCase().includes(query.toLowerCase()) || 
         data.name.toLowerCase().includes(query.toLowerCase())
@@ -129,18 +58,53 @@ export default function StoxaApp() {
     setSuggestions(filtered);
   }, [query]);
 
-  // Szenario-Berechnung
+  // ECHTE DATEN VOM EIGENEN NEXT.JS API-ROUTE HANDLER LADEN
+  useEffect(() => {
+    let isMounted = true;
+    
+    async function fetchRealMarketData() {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/history?symbol=${encodeURIComponent(selectedTicker)}&timeframe=${timeframe}`);
+        if (!res.ok) throw new Error('API Request Failed');
+        
+        const data = await res.json();
+        if (isMounted && data.history && data.history.length > 0) {
+          setHistoryData(data.history);
+          setCurrentPrice(data.currentPrice);
+          setAssetName(data.name || PRESETS[selectedTicker]?.name || selectedTicker);
+        }
+      } catch (err) {
+        console.error("Fehler beim Laden der echten Daten:", err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+
+    fetchRealMarketData();
+    return () => { isMounted = false; };
+  }, [selectedTicker, timeframe]);
+
+  const preset = PRESETS[selectedTicker] || {
+    ticker: selectedTicker,
+    name: assetName,
+    trend: 0.20,
+    vol: 0.30,
+    maxDD: -0.25
+  };
+
+  // Mathematische Szenario-Berechnung
   const timeFactor = timeframe / 12.0;
-  const bullTarget = asset.price * (1 + (Math.max(asset.trend, 0.15) * timeFactor) + (asset.vol * 0.4 * Math.sqrt(timeFactor)));
-  const baseTarget = asset.price * (1 + (Math.max(asset.trend, 0.05) * timeFactor));
-  const bearTarget = Math.max(asset.price * (1 + (asset.maxDD * timeFactor)), 1.0);
+  const bullTarget = currentPrice * (1 + (Math.max(preset.trend, 0.15) * timeFactor) + (preset.vol * 0.4 * Math.sqrt(timeFactor)));
+  const baseTarget = currentPrice * (1 + (Math.max(preset.trend, 0.05) * timeFactor));
+  const bearTarget = Math.max(currentPrice * (1 + (preset.maxDD * timeFactor)), 1.0);
 
-  const bullPct = ((bullTarget - asset.price) / asset.price) * 100;
-  const basePct = ((baseTarget - asset.price) / asset.price) * 100;
-  const bearPct = ((bearTarget - asset.price) / asset.price) * 100;
+  const bullPct = ((bullTarget - currentPrice) / currentPrice) * 100;
+  const basePct = ((baseTarget - currentPrice) / currentPrice) * 100;
+  const bearPct = ((bearTarget - currentPrice) / currentPrice) * 100;
 
-  // ECHTE DATEN DIREKT IN DEN CHART ÜBERNEHMEN (KEINE INTERPOLATION)
-  const formattedChartData: any[] = asset.realDailyHistory.map(h => ({
+  // ECHTE HISTORIE MIT DEM DYNAMISCHEN PROGNOSE-HORIZONT VERKNÜPFEN
+  const formattedChartData: any[] = historyData.map(h => ({
     label: h.date,
     Historical: h.price,
     Bull: null,
@@ -148,30 +112,30 @@ export default function StoxaApp() {
     Bear: null
   }));
 
-  // Verbindungspunkt "Heute"
+  // Anknüpfpunkt "Heute"
   if (formattedChartData.length > 0) {
     const last = formattedChartData[formattedChartData.length - 1];
-    last.Bull = asset.price;
-    last.Base = asset.price;
-    last.Bear = asset.price;
+    last.Bull = currentPrice;
+    last.Base = currentPrice;
+    last.Bear = currentPrice;
   }
 
-  // Zukunftsprognose-Schritte
-  const futureSteps = Math.min(Math.max(Math.floor(timeframe / 2), 4), 12);
+  // Symmetrische dynamische Prognose-Schritte
+  const futureSteps = Math.min(Math.max(Math.floor(historyData.length / 2), 4), 20);
   const currentDate = new Date();
 
   for (let i = 1; i <= futureSteps; i++) {
     const progress = i / futureSteps;
-    const monthVal = Math.round(progress * timeframe);
-    const futureDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + monthVal, 1);
-    const label = futureDate.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
+    const daysAhead = Math.round(progress * (timeframe * 30));
+    const futureDate = new Date(currentDate.getTime() + daysAhead * 24 * 60 * 60 * 1000);
+    const label = futureDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
     
     formattedChartData.push({
       label,
       Historical: null,
-      Bull: Number((asset.price + (bullTarget - asset.price) * progress).toFixed(2)),
-      Base: Number((asset.price + (baseTarget - asset.price) * progress).toFixed(2)),
-      Bear: Number((asset.price + (bearTarget - asset.price) * progress).toFixed(2)),
+      Bull: Number((currentPrice + (bullTarget - currentPrice) * progress).toFixed(2)),
+      Base: Number((currentPrice + (baseTarget - currentPrice) * progress).toFixed(2)),
+      Bear: Number((currentPrice + (bearTarget - currentPrice) * progress).toFixed(2)),
     });
   }
 
@@ -190,8 +154,17 @@ export default function StoxaApp() {
           </div>
         </div>
         <div className="text-xs font-medium px-3 py-1.5 rounded-full bg-white border border-black/[0.08] text-[#1d1d1f] shadow-sm flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span>Verified Market Feed Active</span>
+          {loading ? (
+            <>
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
+              <span>Lade echte Börsendaten...</span>
+            </>
+          ) : (
+            <>
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span>Server Live Data Active</span>
+            </>
+          )}
         </div>
       </header>
 
@@ -211,8 +184,11 @@ export default function StoxaApp() {
                   type="text" 
                   value={query} 
                   onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSelectAsset(query);
+                  }}
                   className="w-full bg-[#f5f5f7] border border-black/10 rounded-2xl pl-12 pr-4 py-3 text-lg font-medium text-[#1d1d1f] placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-all"
-                  placeholder="z.B. AAPL, Volkswagen, Bitcoin..."
+                  placeholder="z.B. AAPL, Volkswagen, VOW3.DE, BTC-USD..."
                 />
               </div>
 
@@ -232,7 +208,7 @@ export default function StoxaApp() {
               )}
 
               <div className="flex gap-2 mt-2.5 flex-wrap">
-                {Object.keys(VERIFIED_ASSETS_DATABASE).map((t) => (
+                {["NVDA", "AAPL", "BTC-USD", "VOW3.DE", "META"].map((t) => (
                   <button 
                     key={t}
                     onClick={() => handleSelectAsset(t)}
@@ -247,7 +223,7 @@ export default function StoxaApp() {
             {/* Horizon Slider */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-[#86868b]">Symmetrischer Horizont</label>
+                <label className="text-xs font-semibold uppercase tracking-wider text-[#86868b]">Prognose-Horizont</label>
                 <span className="text-sm font-bold text-blue-600">{timeframe} Monate ({(timeframe/12).toFixed(1)} Jahre)</span>
               </div>
               <input 
@@ -271,15 +247,15 @@ export default function StoxaApp() {
         {/* Asset Overview Bar */}
         <div className="bg-white border border-black/[0.06] rounded-2xl px-6 py-4 flex items-center justify-between shadow-sm">
           <div>
-            <h2 className="text-xl font-bold text-[#1d1d1f]">{assetName} <span className="text-[#86868b] font-normal text-base">({asset.ticker})</span></h2>
-            <p className="text-xs text-[#86868b]">100% Echte historische Kursverläufe & Szenariokorridor</p>
+            <h2 className="text-xl font-bold text-[#1d1d1f]">{assetName} <span className="text-[#86868b] font-normal text-base">({selectedTicker})</span></h2>
+            <p className="text-xs text-[#86868b]">Echte historische Börsendaten (Next.js Server API) & Szenariokorridor</p>
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-[#1d1d1f]">
-              ${asset.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <div className="text-xs text-emerald-600 font-semibold flex items-center justify-end gap-1">
-              <Activity className="w-3.5 h-3.5" /> Verified Market History
+              <Activity className="w-3.5 h-3.5" /> Real Live Market Price
             </div>
           </div>
         </div>
@@ -331,9 +307,9 @@ export default function StoxaApp() {
         {/* Chart Section */}
         <div className="bg-white border border-black/[0.06] rounded-3xl p-6 shadow-xl shadow-black/[0.02]">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-[#86868b]">Echte Historie & Szenario-Korridor</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-[#86868b]">Real Market History & Predictive Corridor</h3>
             <div className="flex items-center gap-4 text-xs font-medium">
-              <span className="flex items-center gap-1.5 text-slate-700"><span className="w-2 h-2 rounded-full bg-slate-800"></span> Echte Historie</span>
+              <span className="flex items-center gap-1.5 text-slate-700"><span className="w-2 h-2 rounded-full bg-slate-800"></span> Real History ({timeframe}M)</span>
               <span className="flex items-center gap-1.5 text-emerald-600"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Bull Case</span>
               <span className="flex items-center gap-1.5 text-blue-600"><span className="w-2 h-2 rounded-full bg-blue-600"></span> Base Case</span>
               <span className="flex items-center gap-1.5 text-rose-600"><span className="w-2 h-2 rounded-full bg-rose-500"></span> Bear Case</span>

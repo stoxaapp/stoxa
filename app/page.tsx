@@ -31,10 +31,10 @@ export default function StoxaApp() {
   
   const [loading, setLoading] = useState(false);
   const [currentPrice, setCurrentPrice] = useState<number>(135.50);
-  const [historyData, setHistoryData] = useState<{ label: string; Historical: number }[]>([]);
+  const [historyData, setHistoryData] = useState<{ label: string; price: number }[]>([]);
   const [suggestions, setSuggestions] = useState<{ symbol: string; name: string }[]>([]);
 
-  // Sofortige Ausführung bei Ticker-Wechsel (1-Klick System)
+  // 1-Klick Asset Auswahl ohne Doppel-Bestätigung
   const handleSelectAsset = useCallback((tickerSymbol: string) => {
     const clean = tickerSymbol.toUpperCase().trim();
     if (!clean) return;
@@ -50,7 +50,7 @@ export default function StoxaApp() {
     }
   }, []);
 
-  // Autocomplete Suche
+  // Autocomplete Echtzeitfilter
   useEffect(() => {
     if (query.length < 1) {
       setSuggestions([]);
@@ -66,24 +66,25 @@ export default function StoxaApp() {
     setSuggestions(filtered);
   }, [query]);
 
-  // High-Speed Live Market Data Fetching
+  // Echte historische Daten abrufen (dynamisch je nach gewähltem Zeitfenster)
   useEffect(() => {
     let isMounted = true;
 
     async function fetchRealHistory() {
       setLoading(true);
       try {
-        // High-Speed Edge Proxy für Yahoo Finance
-        const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${selectedTicker}?range=1y&interval=1wk`;
+        // Range dynamisch an den Horizont anpassen (max 2 Jahre)
+        const rangeStr = timeframe > 24 ? '2y' : '1y';
+        const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${selectedTicker}?range=${rangeStr}&interval=1mo`;
         const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
         
         const res = await fetch(proxyUrl);
-        if (!res.ok) throw new Error('Proxy error');
+        if (!res.ok) throw new Error('Network response was not ok');
         
         const parsed = await res.json();
         const result = parsed.chart?.result?.[0];
 
-        if (!result) throw new Error('No data');
+        if (!result) throw new Error('No chart data found');
 
         const timestamps: number[] = result.timestamp || [];
         const closes: (number | null)[] = result.indicators?.quote?.[0]?.close || [];
@@ -93,13 +94,13 @@ export default function StoxaApp() {
           const label = date.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
           return {
             label,
-            Historical: closes[idx] ? Number(closes[idx]?.toFixed(2)) : null
+            price: closes[idx] ? Number(closes[idx]?.toFixed(2)) : null
           };
-        }).filter(pt => pt.Historical !== null) as { label: string; Historical: number }[];
+        }).filter(pt => pt.price !== null) as { label: string; price: number }[];
 
         if (isMounted && validPoints.length > 0) {
           setHistoryData(validPoints);
-          const latest = validPoints[validPoints.length - 1].Historical;
+          const latest = validPoints[validPoints.length - 1].price;
           setCurrentPrice(latest);
           
           if (result.meta?.longName || result.meta?.shortName) {
@@ -107,18 +108,15 @@ export default function StoxaApp() {
           }
         }
       } catch (err) {
-        // Robuster Sofort-Fallback bei API-Verzögerung
         if (isMounted) {
-          const preset = PRESET_ASSETS[selectedTicker] || {
-            ticker: selectedTicker, name: selectedTicker, defaultTrend: 0.2, defaultVol: 0.3, defaultMaxDD: -0.25
-          };
-          const basePrice = PRESET_ASSETS[selectedTicker]?.defaultTrend ? 150 : 100;
+          const basePrice = 150;
           setCurrentPrice(basePrice);
           setHistoryData([
-            { label: 'Vor 9M', Historical: Number((basePrice * 0.85).toFixed(2)) },
-            { label: 'Vor 6M', Historical: Number((basePrice * 0.92).toFixed(2)) },
-            { label: 'Vor 3M', Historical: Number((basePrice * 0.97).toFixed(2)) },
-            { label: 'Heute', Historical: basePrice }
+            { label: 'Vor 12M', price: basePrice * 0.80 },
+            { label: 'Vor 9M', price: basePrice * 0.85 },
+            { label: 'Vor 6M', price: basePrice * 0.92 },
+            { label: 'Vor 3M', price: basePrice * 0.97 },
+            { label: 'Heute', price: basePrice }
           ]);
         }
       } finally {
@@ -129,7 +127,7 @@ export default function StoxaApp() {
     fetchRealHistory();
 
     return () => { isMounted = false; };
-  }, [selectedTicker]);
+  }, [selectedTicker, timeframe]);
 
   // Parameter holen
   const preset = PRESET_ASSETS[selectedTicker] || {
@@ -150,19 +148,23 @@ export default function StoxaApp() {
   const basePct = ((baseTarget - currentPrice) / currentPrice) * 100;
   const bearPct = ((bearTarget - currentPrice) / currentPrice) * 100;
 
-  // KOMBINIERUNG DER ECHTEN HISTORIE MIT DER PROGNOSE
-  const stepRatio = Math.max(1, Math.floor(historyData.length / Math.min(timeframe, 12)));
-  const slicedHistory = historyData.filter((_, idx) => idx % stepRatio === 0);
+  // SYMMETRISCHE SYNCHRONISATION VON HISTORIE UND PROGNOSE
+  // Wir nehmen exakt so viele historische Punkte wie der Prognose-Horizont erfordert
+  const requiredHistoryCount = Math.min(Math.max(Math.floor(timeframe / 2), 3), historyData.length);
+  const slicedHistory = historyData.slice(-requiredHistoryCount);
 
-  const formattedChartData: any[] = slicedHistory.map(h => ({
-    label: h.label,
-    Historical: h.Historical,
-    Bull: null,
-    Base: null,
-    Bear: null
-  }));
+  const formattedChartData: any[] = slicedHistory.map((h, idx) => {
+    const monthsAgo = Math.round(((slicedHistory.length - idx) / slicedHistory.length) * timeframe);
+    return {
+      label: `-${monthsAgo}M`,
+      Historical: h.price,
+      Bull: null,
+      Base: null,
+      Bear: null
+    };
+  });
 
-  // Anknüpfpunkte für den Tag "Heute"
+  // Verbindungsstück "Heute"
   formattedChartData.push({
     label: 'Heute',
     Historical: currentPrice,
@@ -171,10 +173,10 @@ export default function StoxaApp() {
     Bear: currentPrice
   });
 
-  // Dynamische Prognoseschritte
-  const steps = Math.min(Math.max(timeframe, 4), 12);
-  for (let i = 1; i <= steps; i++) {
-    const progress = i / steps;
+  // Symmetrische Prognose-Schritte (gleiche Anzahl an Schritten wie Historie)
+  const futureSteps = Math.max(formattedChartData.length - 1, 4);
+  for (let i = 1; i <= futureSteps; i++) {
+    const progress = i / futureSteps;
     const monthVal = Math.round(progress * timeframe);
     
     formattedChartData.push({
@@ -204,7 +206,7 @@ export default function StoxaApp() {
           {loading ? (
             <>
               <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
-              <span>Lade Börsenkurs...</span>
+              <span>Lade Börsendaten...</span>
             </>
           ) : (
             <>
@@ -239,7 +241,7 @@ export default function StoxaApp() {
                 />
               </div>
 
-              {/* 1-Click Autocomplete Dropdown */}
+              {/* 1-Click Dropdown */}
               {suggestions.length > 0 && (
                 <div className="absolute left-0 right-0 mt-2 bg-white border border-black/[0.08] rounded-2xl shadow-2xl z-50 overflow-hidden">
                   {suggestions.map((item) => (
@@ -271,19 +273,19 @@ export default function StoxaApp() {
             {/* Horizon Slider */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-[#86868b]">Prognose-Horizont</label>
+                <label className="text-xs font-semibold uppercase tracking-wider text-[#86868b]">Symmetrischer Prognose-Horizont</label>
                 <span className="text-sm font-bold text-blue-600">{timeframe} Monate ({(timeframe/12).toFixed(1)} Jahre)</span>
               </div>
               <input 
                 type="range" 
-                min="1" 
+                min="3" 
                 max="60" 
                 value={timeframe} 
                 onChange={(e) => setTimeframe(Number(e.target.value))}
                 className="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
               />
               <div className="flex justify-between text-[11px] text-[#86868b] mt-2">
-                <span>1 Monat</span>
+                <span>3 Monate</span>
                 <span>2 Jahre</span>
                 <span>5 Jahre</span>
               </div>
@@ -296,7 +298,7 @@ export default function StoxaApp() {
         <div className="bg-white border border-black/[0.06] rounded-2xl px-6 py-4 flex items-center justify-between shadow-sm">
           <div>
             <h2 className="text-xl font-bold text-[#1d1d1f]">{assetName} <span className="text-[#86868b] font-normal text-base">({selectedTicker})</span></h2>
-            <p className="text-xs text-[#86868b]">Echte historische Marktdaten & Scenariomodell</p>
+            <p className="text-xs text-[#86868b]">Symmetrischer Verlauf: Historie skaliert proportional zu {timeframe}M Prognose</p>
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-[#1d1d1f]">
@@ -355,7 +357,7 @@ export default function StoxaApp() {
         {/* Chart Section */}
         <div className="bg-white border border-black/[0.06] rounded-3xl p-6 shadow-xl shadow-black/[0.02]">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-[#86868b]">Real Market History & Predictive Corridor</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-[#86868b]">Symmetrical Market History & Predictive Corridor</h3>
             <div className="flex items-center gap-4 text-xs font-medium">
               <span className="flex items-center gap-1.5 text-slate-700"><span className="w-2 h-2 rounded-full bg-slate-800"></span> Real History</span>
               <span className="flex items-center gap-1.5 text-emerald-600"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Bull Case</span>

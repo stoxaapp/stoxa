@@ -33,22 +33,26 @@ export default function StoxaApp() {
   const basePct = ((baseTarget - asset.price) / asset.price) * 100;
   const bearPct = ((bearTarget - asset.price) / asset.price) * 100;
 
-  // Lückenlose Generierung von Historie (6 Monate zurück) bis Zukunft (slider-abhängig)
+  // Dynamischer Chart-Generator: Historie passt sich exakt dem Horizon-Slider an!
   const chartData = [];
+  const steps = Math.min(Math.max(timeframe, 6), 24); // Mindestens 6, maximal 24 Zwischenschritte für feine Auflösung
   
-  // 6 Historische Monate generieren
-  for (let i = 6; i > 0; i--) {
-    const historicalPrice = asset.price * (1 - (asset.trend * 0.05 * i));
+  // 1. Historische Kurse generieren (Spiegelbildlich zum gewählten Zeitraum)
+  for (let i = steps; i > 0; i--) {
+    const progress = i / steps;
+    // Realistischerer historischer Pfad mit leichter Rausch-Simulation
+    const noise = Math.sin(i * 1.5) * (asset.price * 0.02);
+    const histPrice = asset.price * (1 - (asset.trend * 0.2 * progress)) + noise;
     chartData.push({
-      label: `-${i}M`,
-      Historical: Number(historicalPrice.toFixed(2)),
+      label: `-${Math.round(progress * timeframe)}M`,
+      Historical: Number(histPrice.toFixed(2)),
       Bull: null,
       Base: null,
       Bear: null
     });
   }
 
-  // Startpunkt "Heute"
+  // 2. Startpunkt "Heute"
   chartData.push({
     label: 'Heute',
     Historical: asset.price,
@@ -57,12 +61,12 @@ export default function StoxaApp() {
     Bear: asset.price
   });
 
-  // Dynamische Zukunftsschritte (Monat für Monat je nach Slider)
-  const stepInterval = Math.max(1, Math.floor(timeframe / 6));
-  for (let m = stepInterval; m <= timeframe; m += stepInterval) {
-    const progress = m / timeframe;
+  // 3. Prognose-Punkte generieren (Zukunft)
+  for (let i = 1; i <= steps; i++) {
+    const progress = i / steps;
+    const currentMonth = Math.round(progress * timeframe);
     chartData.push({
-      label: `+${m}M`,
+      label: `+${currentMonth}M`,
       Historical: null,
       Bull: Number((asset.price + (bullTarget - asset.price) * progress).toFixed(2)),
       Base: Number((asset.price + (baseTarget - asset.price) * progress).toFixed(2)),
@@ -85,7 +89,7 @@ export default function StoxaApp() {
           </div>
         </div>
         <div className="text-xs font-medium px-3 py-1.5 rounded-full bg-white border border-black/[0.08] text-[#1d1d1f] shadow-sm">
-          v2.3 Pro Light Mode
+          v2.4 Pro Engine
         </div>
       </header>
 
@@ -120,7 +124,7 @@ export default function StoxaApp() {
 
             <div>
               <div className="flex justify-between items-center mb-3">
-                <label className="text-xs font-semibold uppercase tracking-wider text-[#86868b]">Projection Horizon</label>
+                <label className="text-xs font-semibold uppercase tracking-wider text-[#86868b]">Projection Horizon & History</label>
                 <span className="text-sm font-bold text-blue-600">{timeframe} Monate ({(timeframe/12).toFixed(1)} Jahre)</span>
               </div>
               <input 
@@ -145,7 +149,7 @@ export default function StoxaApp() {
         <div className="bg-white border border-black/[0.06] rounded-2xl px-6 py-5 flex items-center justify-between shadow-sm">
           <div>
             <h2 className="text-xl font-bold text-[#1d1d1f]">{asset.name} <span className="text-[#86868b] font-normal text-base">({ticker.toUpperCase()})</span></h2>
-            <p className="text-xs text-[#86868b]">Nahtloser Kursverlauf & Skalierter Simulationskorridor</p>
+            <p className="text-xs text-[#86868b]">Symmetrischer Verlauf: {timeframe} Monate Historie ➔ {timeframe} Monate Prognose</p>
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-[#1d1d1f]">${asset.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
@@ -167,18 +171,18 @@ export default function StoxaApp() {
             </div>
           </div>
 
-          <div className="h-[360px] w-full">
+          <div className="h-[380px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
-                <XAxis dataKey="label" stroke="#86868b" fontSize={12} tickLine={false} axisLine={false} />
+                <XAxis dataKey="label" stroke="#86868b" fontSize={11} tickLine={false} axisLine={false} interval="preserveStartEnd" />
                 <YAxis stroke="#86868b" fontSize={12} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#ffffff', borderColor: 'rgba(0,0,0,0.1)', borderRadius: '12px', color: '#1d1d1f', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
                 />
-                <Line type="monotone" dataKey="Historical" stroke="#1d1d1f" strokeWidth={3} dot={false} connectNulls />
-                <Line type="monotone" dataKey="Bull" stroke="#10b981" strokeWidth={3} strokeDasharray="4 4" dot={false} connectNulls />
-                <Line type="monotone" dataKey="Base" stroke="#2563eb" strokeWidth={3} strokeDasharray="4 4" dot={false} connectNulls />
-                <Line type="monotone" dataKey="Bear" stroke="#f43f5e" strokeWidth={3} strokeDasharray="4 4" dot={false} connectNulls />
+                <Line type="monotone" dataKey="Historical" stroke="#1d1d1f" strokeWidth={2.5} dot={false} connectNulls />
+                <Line type="monotone" dataKey="Bull" stroke="#10b981" strokeWidth={2.5} strokeDasharray="4 4" dot={false} connectNulls />
+                <Line type="monotone" dataKey="Base" stroke="#2563eb" strokeWidth={2.5} strokeDasharray="4 4" dot={false} connectNulls />
+                <Line type="monotone" dataKey="Bear" stroke="#f43f5e" strokeWidth={2.5} strokeDasharray="4 4" dot={false} connectNulls />
               </LineChart>
             </ResponsiveContainer>
           </div>

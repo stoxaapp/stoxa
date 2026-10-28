@@ -364,4 +364,17 @@ export default function StoxaApp() {
                 <Line type="monotone" dataKey="Historical" stroke="#1d1d1f" strokeWidth={1.8} dot={false} connectNulls />
                 <Line type="monotone" dataKey="Bull" stroke="#10b981" strokeWidth={1.8} strokeDasharray="4 4" dot={false} connectNulls />
                 <Line type="monotone" dataKey="Base" stroke="#2563eb" strokeWidth={1.8} strokeDasharray="4 4" dot={false} connectNulls />
-                <Line type="monotone" dataKey="Bear" stroke="#f43f5e" strokeWidth={1.8} strokeDasharray="4 4" dot={false} connectNull
+                <Line type="monotone" dataKey="Bear" stroke="#f43f5e" strokeWidth={1.8} strokeDasharray="4 4" dot={false} connectNulls />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="text-center text-xs text-[#86868b] pt-4 border-t border-black/[0.06]">
+          Stoxa.co is a predictive financial simulation engine for educational & research purposes. Not financial advice.
+        </div>
+
+      </main>
+    </div>
+  );
+}

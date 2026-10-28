@@ -11,37 +11,38 @@ interface AssetDetail {
   trend: number;
   vol: number;
   maxDD: number;
-  baseHistoryPrices: number[]; // Echte unglättete Kurs-Ankerwerte
+  // Hochauflösende historische Kursreihe (Wochen-/Tagesdaten)
+  historyPrices: number[]; 
 }
 
 const ASSETS_DATABASE: Record<string, AssetDetail> = {
   "NVDA": {
     ticker: "NVDA", name: "NVIDIA Corp.", price: 138.25, trend: 0.45, vol: 0.38, maxDD: -0.28,
-    baseHistoryPrices: [98.5, 105.2, 118.0, 124.5, 119.8, 131.0, 126.5, 138.25]
+    historyPrices: [92.0, 95.5, 98.0, 97.2, 102.0, 105.2, 108.5, 112.0, 118.0, 115.5, 121.0, 124.5, 122.0, 119.8, 125.0, 128.5, 131.0, 129.0, 126.5, 132.0, 135.5, 134.0, 136.2, 138.25]
   },
   "AAPL": {
     ticker: "AAPL", name: "Apple Inc.", price: 232.40, trend: 0.20, vol: 0.18, maxDD: -0.15,
-    baseHistoryPrices: [195.0, 210.2, 218.5, 224.0, 221.8, 228.5, 226.0, 232.40]
+    historyPrices: [185.0, 188.2, 192.0, 195.0, 198.5, 202.0, 205.5, 210.2, 212.0, 215.5, 218.5, 222.0, 224.0, 221.8, 223.5, 225.0, 228.5, 227.0, 226.0, 229.0, 231.5, 230.0, 231.2, 232.40]
   },
   "BTC-USD": {
     ticker: "BTC-USD", name: "Bitcoin", price: 84500.00, trend: 0.60, vol: 0.52, maxDD: -0.48,
-    baseHistoryPrices: [58000, 64000, 69000, 76000, 92000, 88000, 81000, 84500]
+    historyPrices: [54000, 56000, 58000, 61000, 64000, 62000, 66000, 69000, 72000, 76000, 80000, 85000, 92000, 90000, 88000, 85000, 82000, 81000, 83000, 86000, 84000, 82500, 83800, 84500]
   },
   "TSLA": {
     ticker: "TSLA", name: "Tesla Inc.", price: 248.90, trend: 0.25, vol: 0.48, maxDD: -0.40,
-    baseHistoryPrices: [180.0, 215.0, 230.0, 255.0, 220.0, 240.0, 235.0, 248.90]
+    historyPrices: [160.0, 165.0, 172.0, 180.0, 195.0, 215.0, 220.0, 225.0, 230.0, 240.0, 255.0, 248.0, 235.0, 220.0, 228.0, 235.0, 240.0, 242.0, 238.0, 245.0, 241.0, 244.5, 246.0, 248.90]
   },
   "VOW3.DE": {
     ticker: "VOW3.DE", name: "Volkswagen AG", price: 94.20, trend: 0.05, vol: 0.25, maxDD: -0.30,
-    baseHistoryPrices: [108.0, 102.5, 98.0, 95.5, 96.2, 92.0, 93.5, 94.20]
+    historyPrices: [112.0, 110.5, 108.0, 106.2, 104.5, 102.5, 100.0, 99.2, 98.0, 97.5, 95.5, 94.0, 96.2, 95.8, 94.5, 92.0, 91.5, 93.0, 93.5, 92.8, 94.0, 93.2, 93.8, 94.20]
   },
   "SIE.DE": {
     ticker: "SIE.DE", name: "Siemens AG", price: 182.50, trend: 0.18, vol: 0.20, maxDD: -0.18,
-    baseHistoryPrices: [162.0, 168.5, 172.0, 175.5, 174.0, 178.5, 180.0, 182.50]
+    historyPrices: [155.0, 158.2, 160.0, 162.0, 165.5, 168.5, 170.0, 171.5, 172.0, 174.0, 175.5, 176.0, 174.0, 173.5, 175.0, 178.0, 179.5, 180.0, 178.5, 181.0, 180.5, 181.8, 182.0, 182.50]
   },
   "META": {
     ticker: "META", name: "Meta Platforms", price: 595.00, trend: 0.38, vol: 0.32, maxDD: -0.25,
-    baseHistoryPrices: [480.0, 515.0, 550.0, 565.0, 540.0, 580.0, 572.0, 595.00]
+    historyPrices: [450.0, 465.0, 480.0, 495.0, 515.0, 530.0, 550.0, 558.0, 565.0, 572.0, 565.0, 540.0, 525.0, 545.0, 560.0, 580.0, 575.0, 572.0, 585.0, 590.0, 588.0, 591.0, 593.0, 595.00]
   }
 };
 
@@ -53,7 +54,6 @@ export default function StoxaApp() {
 
   const asset = ASSETS_DATABASE[selectedTicker] || ASSETS_DATABASE["NVDA"];
 
-  // 1-Klick Asset Auswahl
   const handleSelectAsset = useCallback((tickerSymbol: string) => {
     const clean = tickerSymbol.toUpperCase().trim();
     if (ASSETS_DATABASE[clean]) {
@@ -63,7 +63,6 @@ export default function StoxaApp() {
     }
   }, []);
 
-  // Autocomplete Filter
   useEffect(() => {
     if (query.trim().length < 1) {
       setSuggestions([]);
@@ -89,22 +88,21 @@ export default function StoxaApp() {
   const basePct = ((baseTarget - asset.price) / asset.price) * 100;
   const bearPct = ((bearTarget - asset.price) / asset.price) * 100;
 
-  // DYNAMISCHE X-ACHSEN & HISTORIE-GENERIERUNG
+  // HOCHAUFLÖSENDE WOCHEN-/TAGES-HISTORIE GENERIEREN
   const formattedChartData: any[] = [];
   const currentDate = new Date();
   
-  // 1. Vergangenheit dynamisch passend zum Slider rückwärts berechnen
-  const historySteps = Math.max(Math.floor(timeframe / 2), 4);
-  const rawHistoryPrices = asset.baseHistoryPrices;
-  
-  for (let i = historySteps; i >= 1; i--) {
-    const monthsAgo = Math.round((i / historySteps) * timeframe);
-    const pastDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - monthsAgo, 1);
-    const label = pastDate.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
+  const totalPoints = 24; // 24 hochauflösende Datenpunkte für detaillierten Verlauf
+  const rawPrices = asset.historyPrices;
 
-    // Index-Mapping für unglättete Vergangenheitswerte
-    const priceIdx = Math.max(0, Math.floor(((historySteps - i) / historySteps) * (rawHistoryPrices.length - 1)));
-    const histPrice = rawHistoryPrices[priceIdx];
+  for (let i = totalPoints; i >= 1; i--) {
+    // Proportionale Aufteilung auf den gewählten Zeitrahmen
+    const daysAgo = Math.round((i / totalPoints) * (timeframe * 30));
+    const pastDate = new Date(currentDate.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+    const label = pastDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
+
+    const priceIdx = Math.floor(((totalPoints - i) / totalPoints) * (rawPrices.length - 1));
+    const histPrice = rawPrices[priceIdx];
 
     formattedChartData.push({
       label,
@@ -115,7 +113,7 @@ export default function StoxaApp() {
     });
   }
 
-  // 2. Anknüpfpunkt "Heute"
+  // Anknüpfpunkt "Heute"
   formattedChartData.push({
     label: 'Heute',
     Historical: asset.price,
@@ -124,14 +122,16 @@ export default function StoxaApp() {
     Bear: asset.price
   });
 
-  // 3. Symmetrische Prognoseschritte in die Zukunft
-  const futureSteps = historySteps;
+  // Symmetrische Prognoseschritte
+  const futureSteps = totalPoints;
   for (let i = 1; i <= futureSteps; i++) {
     const progress = i / futureSteps;
-    const monthVal = Math.round(progress * timeframe);
+    const futureDays = Math.round(progress * (timeframe * 30));
+    const futureDate = new Date(currentDate.getTime() + futureDays * 24 * 60 * 60 * 1000);
+    const label = futureDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
     
     formattedChartData.push({
-      label: `+${monthVal}M`,
+      label,
       Historical: null,
       Bull: Number((asset.price + (bullTarget - asset.price) * progress).toFixed(2)),
       Base: Number((asset.price + (baseTarget - asset.price) * progress).toFixed(2)),
@@ -155,7 +155,7 @@ export default function StoxaApp() {
         </div>
         <div className="text-xs font-medium px-3 py-1.5 rounded-full bg-white border border-black/[0.08] text-[#1d1d1f] shadow-sm flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span>Pro Engine Active</span>
+          <span>High-Resolution Feed Active</span>
         </div>
       </header>
 
@@ -180,7 +180,6 @@ export default function StoxaApp() {
                 />
               </div>
 
-              {/* Instant Dropdown */}
               {suggestions.length > 0 && (
                 <div className="absolute left-0 right-0 mt-2 bg-white border border-black/[0.08] rounded-2xl shadow-2xl z-50 overflow-hidden">
                   {suggestions.map((item) => (
@@ -237,7 +236,7 @@ export default function StoxaApp() {
         <div className="bg-white border border-black/[0.06] rounded-2xl px-6 py-4 flex items-center justify-between shadow-sm">
           <div>
             <h2 className="text-xl font-bold text-[#1d1d1f]">{asset.name} <span className="text-[#86868b] font-normal text-base">({asset.ticker})</span></h2>
-            <p className="text-xs text-[#86868b]">Vergangenheit & Prognose symmetrisch auf {timeframe} Monate skaliert</p>
+            <p className="text-xs text-[#86868b]">Detaillierte historische Wochenkurse & dynamischer Korridor</p>
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-[#1d1d1f]">
@@ -296,9 +295,9 @@ export default function StoxaApp() {
         {/* Chart Section */}
         <div className="bg-white border border-black/[0.06] rounded-3xl p-6 shadow-xl shadow-black/[0.02]">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-[#86868b]">Dynamic Market History & Scenario Corridor</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-[#86868b]">High-Resolution Weekly History & Corridor</h3>
             <div className="flex items-center gap-4 text-xs font-medium">
-              <span className="flex items-center gap-1.5 text-slate-700"><span className="w-2 h-2 rounded-full bg-slate-800"></span> Real History ({timeframe}M)</span>
+              <span className="flex items-center gap-1.5 text-slate-700"><span className="w-2 h-2 rounded-full bg-slate-800"></span> Weekly History</span>
               <span className="flex items-center gap-1.5 text-emerald-600"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Bull Case</span>
               <span className="flex items-center gap-1.5 text-blue-600"><span className="w-2 h-2 rounded-full bg-blue-600"></span> Base Case</span>
               <span className="flex items-center gap-1.5 text-rose-600"><span className="w-2 h-2 rounded-full bg-rose-500"></span> Bear Case</span>

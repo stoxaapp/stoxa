@@ -25,7 +25,7 @@ export default function StoxaApp() {
     symbol: "NVDA",
     name: "NVIDIA Corp.",
     currentPrice: 138.25,
-    trend: 0.45,
+    trend: 0.42,
     vol: 0.38,
     maxDD: -0.28,
     history: []
@@ -40,7 +40,7 @@ export default function StoxaApp() {
     }
   }, []);
 
-  // API Abfrage mit dynamic timeframe
+  // API Abfrage mit dynamischem timeframe & metrischen Daten
   useEffect(() => {
     let isMounted = true;
 
@@ -70,17 +70,23 @@ export default function StoxaApp() {
     return () => { isMounted = false; };
   }, [selectedTicker, timeframe]);
 
-  // Szenario-Berechnung
+  // ECHTE DYNAMISCHE SZENARIO-BERECHNUNG JE ASSET
   const timeFactor = timeframe / 12.0;
-  const bullTarget = assetData.currentPrice * (1 + (Math.max(assetData.trend, 0.15) * timeFactor) + (assetData.vol * 0.4 * Math.sqrt(timeFactor)));
-  const baseTarget = assetData.currentPrice * (1 + (Math.max(assetData.trend, 0.05) * timeFactor));
-  const bearTarget = Math.max(assetData.currentPrice * (1 + (assetData.maxDD * timeFactor)), 1.0);
+
+  // Bull: Trend + Volatilitätsschub
+  const bullTarget = assetData.currentPrice * (1 + (Math.max(assetData.trend, 0.08) * timeFactor) + (assetData.vol * 0.5 * Math.sqrt(timeFactor)));
+  
+  // Base: Reiner Jahrestrend (CAGR)
+  const baseTarget = assetData.currentPrice * (1 + (assetData.trend * timeFactor));
+  
+  // Bear: Maximum Drawdown Stress-Test
+  const bearTarget = Math.max(assetData.currentPrice * (1 + (assetData.maxDD * Math.sqrt(timeFactor))), 1.0);
 
   const bullPct = ((bullTarget - assetData.currentPrice) / assetData.currentPrice) * 100;
   const basePct = ((baseTarget - assetData.currentPrice) / assetData.currentPrice) * 100;
   const bearPct = ((bearTarget - assetData.currentPrice) / assetData.currentPrice) * 100;
 
-  // EXAKTE 50/50 SPITZE-ZU-SPITZE SYMMETRIE AUF DER X-ACHSE
+  // 50/50 Symmetrischer Chart-Aufbau
   const historyPoints = assetData.history || [];
 
   const formattedChartData: any[] = historyPoints.map(h => ({
@@ -99,7 +105,7 @@ export default function StoxaApp() {
     last.Bear = assetData.currentPrice;
   }
 
-  // Zukunfts-Schritte: Exakt so viele Punkte wie die Historie -> Bucht genau 50% der X-Achse ein!
+  // Zukunfts-Schritte (Exakt 50/50)
   const futureSteps = Math.max(historyPoints.length, 10);
   const currentDate = new Date();
 
@@ -136,12 +142,12 @@ export default function StoxaApp() {
           {loading ? (
             <>
               <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
-              <span>Synchronisiere 50/50 Achse...</span>
+              <span>Berechne Volatilität & Trends...</span>
             </>
           ) : (
             <>
               <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span>50/50 Dynamic Axis Connected</span>
+              <span>Dynamic Financial Engine Active</span>
             </>
           )}
         </div>
@@ -187,10 +193,10 @@ export default function StoxaApp() {
               </div>
             </div>
 
-            {/* Symmetrischer Slider */}
+            {/* Horizon Slider */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-[#86868b]">Symmetrischer Horizont (Perfekt 50 / 50)</label>
+                <label className="text-xs font-semibold uppercase tracking-wider text-[#86868b]">Symmetrischer Horizont</label>
                 <span className="text-sm font-bold text-blue-600">{timeframe} Monate ({(timeframe/12).toFixed(1)} Jahre)</span>
               </div>
               <input 
@@ -215,14 +221,18 @@ export default function StoxaApp() {
         <div className="bg-white border border-black/[0.06] rounded-2xl px-6 py-4 flex items-center justify-between shadow-sm">
           <div>
             <h2 className="text-xl font-bold text-[#1d1d1f]">{assetData.name} <span className="text-[#86868b] font-normal text-base">({assetData.symbol})</span></h2>
-            <p className="text-xs text-[#86868b]">Symmetrisches Verhältnis: Exakt {timeframe}M Historie ↔ {timeframe}M Prognose</p>
+            <p className="text-xs text-[#86868b]">
+              Echte Hist. Volatilität: <span className="font-semibold text-slate-700">{(assetData.vol * 100).toFixed(1)}%</span> | 
+              CAGR Trend: <span className="font-semibold text-slate-700">{(assetData.trend * 100).toFixed(1)}%</span> | 
+              Max Drawdown: <span className="font-semibold text-slate-700">{(assetData.maxDD * 100).toFixed(1)}%</span>
+            </p>
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-[#1d1d1f]">
               ${assetData.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <div className="text-xs text-emerald-600 font-semibold flex items-center justify-end gap-1">
-              <Activity className="w-3.5 h-3.5" /> Real Daily Feed Active
+              <Activity className="w-3.5 h-3.5" /> Live Benchmark Active
             </div>
           </div>
         </div>
@@ -274,9 +284,9 @@ export default function StoxaApp() {
         {/* Chart Section */}
         <div className="bg-white border border-black/[0.06] rounded-3xl p-6 shadow-xl shadow-black/[0.02]">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-[#86868b]">Exakte 50/50 Achsentrennung ({timeframe}M Vergangenheit ↔ {timeframe}M Zukunft)</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-[#86868b]">Asset-Spezifischer Szenario-Korridor ({timeframe}M)</h3>
             <div className="flex items-center gap-4 text-xs font-medium">
-              <span className="flex items-center gap-1.5 text-slate-700"><span className="w-2 h-2 rounded-full bg-slate-800"></span> Tageshistorie ({timeframe}M)</span>
+              <span className="flex items-center gap-1.5 text-slate-700"><span className="w-2 h-2 rounded-full bg-slate-800"></span> Tageshistorie</span>
               <span className="flex items-center gap-1.5 text-emerald-600"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Bull Case</span>
               <span className="flex items-center gap-1.5 text-blue-600"><span className="w-2 h-2 rounded-full bg-blue-600"></span> Base Case</span>
               <span className="flex items-center gap-1.5 text-rose-600"><span className="w-2 h-2 rounded-full bg-rose-500"></span> Bear Case</span>

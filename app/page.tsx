@@ -14,20 +14,13 @@ interface AssetDetail {
   history: { date: string; price: number }[];
 }
 
-const PRESET_LIST = [
-  { symbol: "NVDA", name: "NVIDIA Corp." },
-  { symbol: "AAPL", name: "Apple Inc." },
-  { symbol: "BTC-USD", name: "Bitcoin" },
-  { symbol: "VOW3.DE", name: "Volkswagen AG" },
-  { symbol: "META", name: "Meta Platforms" }
-];
-
 export default function StoxaApp() {
   const [query, setQuery] = useState("");
   const [selectedTicker, setSelectedTicker] = useState("NVDA");
-  const [timeframe, setTimeframe] = useState(12);
+  const [timeframe, setTimeframe] = useState(12); // Standard: 12 Monate Symmetrie
   
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   const [assetData, setAssetData] = useState<AssetDetail>({
     symbol: "NVDA",
     name: "NVIDIA Corp.",
@@ -37,47 +30,37 @@ export default function StoxaApp() {
     maxDD: -0.28,
     history: []
   });
-  
-  const [suggestions, setSuggestions] = useState<{ symbol: string; name: string }[]>([]);
 
   const handleSelectAsset = useCallback((tickerSymbol: string) => {
     const clean = tickerSymbol.toUpperCase().trim();
     if (clean) {
       setSelectedTicker(clean);
       setQuery("");
-      setSuggestions([]);
+      setErrorMsg("");
     }
   }, []);
 
-  // Autocomplete Suchfilter
-  useEffect(() => {
-    if (query.trim().length < 1) {
-      setSuggestions([]);
-      return;
-    }
-    const filtered = PRESET_LIST.filter(item => 
-      item.symbol.toLowerCase().includes(query.toLowerCase()) || 
-      item.name.toLowerCase().includes(query.toLowerCase())
-    );
-    setSuggestions(filtered);
-  }, [query]);
-
-  // Daten vom Server laden
+  // Symmetrische Abfrage: Übergibt Ticker AND den aktuellen Slider-Zeitraum (timeframe)
   useEffect(() => {
     let isMounted = true;
 
     async function fetchData() {
       setLoading(true);
+      setErrorMsg("");
       try {
-        const res = await fetch(`/api/history?symbol=${encodeURIComponent(selectedTicker)}`);
-        if (!res.ok) throw new Error('Failed to fetch');
+        const res = await fetch(`/api/history?symbol=${encodeURIComponent(selectedTicker)}&timeframe=${timeframe}`);
+        if (!res.ok) {
+          throw new Error('Asset nicht gefunden.');
+        }
         const data = await res.json();
         
         if (isMounted) {
           setAssetData(data);
         }
-      } catch (err) {
-        console.error("API Error:", err);
+      } catch (err: any) {
+        if (isMounted) {
+          setErrorMsg(err.message || 'Fehler beim Laden.');
+        }
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -85,7 +68,7 @@ export default function StoxaApp() {
 
     fetchData();
     return () => { isMounted = false; };
-  }, [selectedTicker]);
+  }, [selectedTicker, timeframe]);
 
   // Szenario-Berechnung
   const timeFactor = timeframe / 12.0;
@@ -97,7 +80,7 @@ export default function StoxaApp() {
   const basePct = ((baseTarget - assetData.currentPrice) / assetData.currentPrice) * 100;
   const bearPct = ((bearTarget - assetData.currentPrice) / assetData.currentPrice) * 100;
 
-  // Chart-Daten zusammenführen (Historie + Heute + Prognose)
+  // Symmetrischer Chart-Aufbau: Tagesgenaue Historie + Anknüpfpunkt Heute + Spiegelbildliche Prognose
   const formattedChartData: any[] = (assetData.history || []).map(h => ({
     label: h.date,
     Historical: h.price,
@@ -113,15 +96,15 @@ export default function StoxaApp() {
     last.Bear = assetData.currentPrice;
   }
 
-  // Prognoseschritte
-  const futureSteps = Math.min(Math.max(Math.floor(formattedChartData.length / 2), 4), 12);
+  // Symmetrische Zukunfts-Prognose (gleiche Dichte an Schritten wie die Historie)
+  const futureSteps = Math.min(Math.max(formattedChartData.length, 10), 80);
   const currentDate = new Date();
 
   for (let i = 1; i <= futureSteps; i++) {
     const progress = i / futureSteps;
-    const monthVal = Math.round(progress * timeframe);
-    const futureDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + monthVal, 1);
-    const label = futureDate.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
+    const daysAhead = Math.round(progress * (timeframe * 30));
+    const futureDate = new Date(currentDate.getTime() + daysAhead * 24 * 60 * 60 * 1000);
+    const label = futureDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
     
     formattedChartData.push({
       label,
@@ -150,12 +133,12 @@ export default function StoxaApp() {
           {loading ? (
             <>
               <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
-              <span>Aktualisiere Daten...</span>
+              <span>Lade symmetrische Tagesdaten...</span>
             </>
           ) : (
             <>
               <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span>Server Feed Active</span>
+              <span>1:1 Symmetrical Feed Active</span>
             </>
           )}
         </div>
@@ -168,9 +151,9 @@ export default function StoxaApp() {
         <div className="bg-white border border-black/[0.06] rounded-3xl p-6 shadow-xl shadow-black/[0.02] relative">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
             
-            {/* Search Input & 1-Click Dropdown */}
+            {/* Search Input */}
             <div className="relative">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[#86868b] mb-2">Asset Suchen (Ticker oder Name)</label>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#86868b] mb-2">Asset Suchen (Ticker + Enter)</label>
               <div className="relative">
                 <Search className="absolute left-4 top-3.5 w-5 h-5 text-slate-400" />
                 <input 
@@ -178,59 +161,47 @@ export default function StoxaApp() {
                   value={query} 
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSelectAsset(query);
+                    if (e.key === 'Enter' && query.trim()) {
+                      handleSelectAsset(query);
+                    }
                   }}
                   className="w-full bg-[#f5f5f7] border border-black/10 rounded-2xl pl-12 pr-4 py-3 text-lg font-medium text-[#1d1d1f] placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-all"
-                  placeholder="z.B. NVDA, AAPL, Volkswagen..."
+                  placeholder="z.B. AAPL, TSLA, BTC-USD, VOW3.DE..."
                 />
               </div>
-
-              {suggestions.length > 0 && (
-                <div className="absolute left-0 right-0 mt-2 bg-white border border-black/[0.08] rounded-2xl shadow-2xl z-50 overflow-hidden">
-                  {suggestions.map((item) => (
-                    <div
-                      key={item.symbol}
-                      onPointerDown={() => handleSelectAsset(item.symbol)}
-                      className="w-full px-5 py-3 text-left hover:bg-blue-50/60 flex items-center justify-between border-b border-black/[0.03] last:border-none cursor-pointer transition-colors"
-                    >
-                      <span className="font-semibold text-[#1d1d1f]">{item.name}</span>
-                      <span className="text-xs px-2.5 py-1 rounded-lg bg-slate-100 text-blue-600 font-bold">{item.symbol}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
+              {errorMsg && <p className="text-xs text-rose-500 mt-1.5">{errorMsg}</p>}
 
               <div className="flex gap-2 mt-2.5 flex-wrap">
-                {PRESET_LIST.map((t) => (
+                {["NVDA", "AAPL", "TSLA", "BTC-USD", "MSFT", "AMZN", "VOW3.DE"].map((t) => (
                   <button 
-                    key={t.symbol}
-                    onClick={() => handleSelectAsset(t.symbol)}
-                    className={`text-xs px-3 py-1.5 rounded-xl border transition-all ${selectedTicker === t.symbol ? 'bg-blue-50 border-blue-600 text-blue-600 font-semibold shadow-sm' : 'bg-white border-black/10 text-[#86868b] hover:border-black/30'}`}
+                    key={t}
+                    onClick={() => handleSelectAsset(t)}
+                    className={`text-xs px-3 py-1.5 rounded-xl border transition-all ${selectedTicker === t ? 'bg-blue-50 border-blue-600 text-blue-600 font-semibold shadow-sm' : 'bg-white border-black/10 text-[#86868b] hover:border-black/30'}`}
                   >
-                    {t.symbol}
+                    {t}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Horizon Slider */}
+            {/* Symmetrischer Slider (Max 24 Monate / 2 Jahre) */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-[#86868b]">Prognose-Horizont</label>
+                <label className="text-xs font-semibold uppercase tracking-wider text-[#86868b]">Symmetrischer Horizont (Vergangenheit = Zukunft)</label>
                 <span className="text-sm font-bold text-blue-600">{timeframe} Monate ({(timeframe/12).toFixed(1)} Jahre)</span>
               </div>
               <input 
                 type="range" 
                 min="3" 
-                max="60" 
+                max="24" 
                 value={timeframe} 
                 onChange={(e) => setTimeframe(Number(e.target.value))}
                 className="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
               />
               <div className="flex justify-between text-[11px] text-[#86868b] mt-2">
                 <span>3 Monate</span>
-                <span>2 Jahre</span>
-                <span>5 Jahre</span>
+                <span>12 Monate (1 J.)</span>
+                <span>24 Monate (2 J.)</span>
               </div>
             </div>
 
@@ -241,14 +212,14 @@ export default function StoxaApp() {
         <div className="bg-white border border-black/[0.06] rounded-2xl px-6 py-4 flex items-center justify-between shadow-sm">
           <div>
             <h2 className="text-xl font-bold text-[#1d1d1f]">{assetData.name} <span className="text-[#86868b] font-normal text-base">({assetData.symbol})</span></h2>
-            <p className="text-xs text-[#86868b]">Echte historische Marktdaten & dynamischer Korridor</p>
+            <p className="text-xs text-[#86868b]">Exakte {timeframe} Monate Tageshistorie vs. {timeframe} Monate Simulation</p>
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-[#1d1d1f]">
               ${assetData.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <div className="text-xs text-emerald-600 font-semibold flex items-center justify-end gap-1">
-              <Activity className="w-3.5 h-3.5" /> Live Market Price Active
+              <Activity className="w-3.5 h-3.5" /> Live Daily Feed Active
             </div>
           </div>
         </div>
@@ -300,9 +271,9 @@ export default function StoxaApp() {
         {/* Chart Section */}
         <div className="bg-white border border-black/[0.06] rounded-3xl p-6 shadow-xl shadow-black/[0.02]">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-[#86868b]">Real Market History & Scenario Corridor</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-[#86868b]">1:1 Symmetrische Tageshistorie & Szenario-Korridor</h3>
             <div className="flex items-center gap-4 text-xs font-medium">
-              <span className="flex items-center gap-1.5 text-slate-700"><span className="w-2 h-2 rounded-full bg-slate-800"></span> Echte Historie</span>
+              <span className="flex items-center gap-1.5 text-slate-700"><span className="w-2 h-2 rounded-full bg-slate-800"></span> Tageshistorie ({timeframe}M)</span>
               <span className="flex items-center gap-1.5 text-emerald-600"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Bull Case</span>
               <span className="flex items-center gap-1.5 text-blue-600"><span className="w-2 h-2 rounded-full bg-blue-600"></span> Base Case</span>
               <span className="flex items-center gap-1.5 text-rose-600"><span className="w-2 h-2 rounded-full bg-rose-500"></span> Bear Case</span>
@@ -317,10 +288,10 @@ export default function StoxaApp() {
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#ffffff', borderColor: 'rgba(0,0,0,0.1)', borderRadius: '12px', color: '#1d1d1f', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
                 />
-                <Line type="monotone" dataKey="Historical" stroke="#1d1d1f" strokeWidth={2} dot={false} connectNulls />
-                <Line type="monotone" dataKey="Bull" stroke="#10b981" strokeWidth={2} strokeDasharray="4 4" dot={false} connectNulls />
-                <Line type="monotone" dataKey="Base" stroke="#2563eb" strokeWidth={2} strokeDasharray="4 4" dot={false} connectNulls />
-                <Line type="monotone" dataKey="Bear" stroke="#f43f5e" strokeWidth={2} strokeDasharray="4 4" dot={false} connectNulls />
+                <Line type="monotone" dataKey="Historical" stroke="#1d1d1f" strokeWidth={1.8} dot={false} connectNulls />
+                <Line type="monotone" dataKey="Bull" stroke="#10b981" strokeWidth={1.8} strokeDasharray="4 4" dot={false} connectNulls />
+                <Line type="monotone" dataKey="Base" stroke="#2563eb" strokeWidth={1.8} strokeDasharray="4 4" dot={false} connectNulls />
+                <Line type="monotone" dataKey="Bear" stroke="#f43f5e" strokeWidth={1.8} strokeDasharray="4 4" dot={false} connectNulls />
               </LineChart>
             </ResponsiveContainer>
           </div>

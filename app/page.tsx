@@ -17,7 +17,7 @@ interface AssetDetail {
 export default function StoxaApp() {
   const [query, setQuery] = useState("");
   const [selectedTicker, setSelectedTicker] = useState("NVDA");
-  const [timeframe, setTimeframe] = useState(12); // Standard: 12 Monate Symmetrie
+  const [timeframe, setTimeframe] = useState(12);
   
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -40,7 +40,7 @@ export default function StoxaApp() {
     }
   }, []);
 
-  // Symmetrische Abfrage: Übergibt Ticker AND den aktuellen Slider-Zeitraum (timeframe)
+  // API Abfrage mit dynamic timeframe
   useEffect(() => {
     let isMounted = true;
 
@@ -80,8 +80,10 @@ export default function StoxaApp() {
   const basePct = ((baseTarget - assetData.currentPrice) / assetData.currentPrice) * 100;
   const bearPct = ((bearTarget - assetData.currentPrice) / assetData.currentPrice) * 100;
 
-  // Symmetrischer Chart-Aufbau: Tagesgenaue Historie + Anknüpfpunkt Heute + Spiegelbildliche Prognose
-  const formattedChartData: any[] = (assetData.history || []).map(h => ({
+  // EXAKTE 50/50 SPITZE-ZU-SPITZE SYMMETRIE AUF DER X-ACHSE
+  const historyPoints = assetData.history || [];
+
+  const formattedChartData: any[] = historyPoints.map(h => ({
     label: h.date,
     Historical: h.price,
     Bull: null,
@@ -89,6 +91,7 @@ export default function StoxaApp() {
     Bear: null
   }));
 
+  // Anknüpfpunkt "Heute"
   if (formattedChartData.length > 0) {
     const last = formattedChartData[formattedChartData.length - 1];
     last.Bull = assetData.currentPrice;
@@ -96,8 +99,8 @@ export default function StoxaApp() {
     last.Bear = assetData.currentPrice;
   }
 
-  // Symmetrische Zukunfts-Prognose (gleiche Dichte an Schritten wie die Historie)
-  const futureSteps = Math.min(Math.max(formattedChartData.length, 10), 80);
+  // Zukunfts-Schritte: Exakt so viele Punkte wie die Historie -> Bucht genau 50% der X-Achse ein!
+  const futureSteps = Math.max(historyPoints.length, 10);
   const currentDate = new Date();
 
   for (let i = 1; i <= futureSteps; i++) {
@@ -133,12 +136,12 @@ export default function StoxaApp() {
           {loading ? (
             <>
               <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
-              <span>Lade symmetrische Tagesdaten...</span>
+              <span>Synchronisiere 50/50 Achse...</span>
             </>
           ) : (
             <>
               <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span>1:1 Symmetrical Feed Active</span>
+              <span>50/50 Dynamic Axis Connected</span>
             </>
           )}
         </div>
@@ -184,10 +187,10 @@ export default function StoxaApp() {
               </div>
             </div>
 
-            {/* Symmetrischer Slider (Max 24 Monate / 2 Jahre) */}
+            {/* Symmetrischer Slider */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-[#86868b]">Symmetrischer Horizont (Vergangenheit = Zukunft)</label>
+                <label className="text-xs font-semibold uppercase tracking-wider text-[#86868b]">Symmetrischer Horizont (Perfekt 50 / 50)</label>
                 <span className="text-sm font-bold text-blue-600">{timeframe} Monate ({(timeframe/12).toFixed(1)} Jahre)</span>
               </div>
               <input 
@@ -212,19 +215,19 @@ export default function StoxaApp() {
         <div className="bg-white border border-black/[0.06] rounded-2xl px-6 py-4 flex items-center justify-between shadow-sm">
           <div>
             <h2 className="text-xl font-bold text-[#1d1d1f]">{assetData.name} <span className="text-[#86868b] font-normal text-base">({assetData.symbol})</span></h2>
-            <p className="text-xs text-[#86868b]">Exakte {timeframe} Monate Tageshistorie vs. {timeframe} Monate Simulation</p>
+            <p className="text-xs text-[#86868b]">Symmetrisches Verhältnis: Exakt {timeframe}M Historie ↔ {timeframe}M Prognose</p>
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-[#1d1d1f]">
               ${assetData.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <div className="text-xs text-emerald-600 font-semibold flex items-center justify-end gap-1">
-              <Activity className="w-3.5 h-3.5" /> Live Daily Feed Active
+              <Activity className="w-3.5 h-3.5" /> Real Daily Feed Active
             </div>
           </div>
         </div>
 
-        {/* 3 SCENARIO CARDS (ÜBER DER GRAFIK) */}
+        {/* 3 SCENARIO CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
           <div className="bg-white border border-black/[0.06] hover:border-emerald-500/50 rounded-2xl p-5 shadow-sm transition-all">
@@ -271,7 +274,7 @@ export default function StoxaApp() {
         {/* Chart Section */}
         <div className="bg-white border border-black/[0.06] rounded-3xl p-6 shadow-xl shadow-black/[0.02]">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-[#86868b]">1:1 Symmetrische Tageshistorie & Szenario-Korridor</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-[#86868b]">Exakte 50/50 Achsentrennung ({timeframe}M Vergangenheit ↔ {timeframe}M Zukunft)</h3>
             <div className="flex items-center gap-4 text-xs font-medium">
               <span className="flex items-center gap-1.5 text-slate-700"><span className="w-2 h-2 rounded-full bg-slate-800"></span> Tageshistorie ({timeframe}M)</span>
               <span className="flex items-center gap-1.5 text-emerald-600"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Bull Case</span>

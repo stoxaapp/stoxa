@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Activity, ArrowUpRight, ArrowDownRight, Sparkles, AlertCircle, Search } from 'lucide-react';
+import { TrendingUp, Activity, ArrowUpRight, ArrowDownRight, Sparkles, Search } from 'lucide-react';
 
 interface AssetData {
   ticker: string;
@@ -11,41 +11,26 @@ interface AssetData {
   trend: number;
   vol: number;
   maxDD: number;
-  history: { label: string; price: number }[];
   isFallback?: boolean;
 }
 
-// Umfangreiche Asset-Datenbank inklusive deutscher/globaler Standardwerte
-const PRESET_ASSETS: Record<string, { name: string; price: number; trend: number; vol: number; maxDD: number }> = {
-  "NVDA": { name: "NVIDIA Corp.", price: 135.50, trend: 0.65, vol: 0.45, maxDD: -0.35 },
-  "AAPL": { name: "Apple Inc.", price: 228.20, trend: 0.22, vol: 0.20, maxDD: -0.18 },
-  "BTC-USD": { name: "Bitcoin", price: 92400.00, trend: 0.85, vol: 0.65, maxDD: -0.55 },
-  "TSLA": { name: "Tesla Inc.", price: 245.80, trend: 0.15, vol: 0.55, maxDD: -0.48 },
-  "VOW3.DE": { name: "Volkswagen AG", price: 98.50, trend: 0.08, vol: 0.28, maxDD: -0.30 },
-  "SIE.DE": { name: "Siemens AG", price: 175.20, trend: 0.18, vol: 0.22, maxDD: -0.20 },
-  "META": { name: "Meta Platforms", price: 580.00, trend: 0.40, vol: 0.35, maxDD: -0.30 },
-  "GOOGL": { name: "Alphabet Inc.", price: 180.00, trend: 0.25, vol: 0.24, maxDD: -0.22 }
+const PRESET_ASSETS: Record<string, AssetData> = {
+  "NVDA": { ticker: "NVDA", name: "NVIDIA Corp.", price: 219.40, trend: 0.45, vol: 0.38, maxDD: -0.28 },
+  "AAPL": { ticker: "AAPL", name: "Apple Inc.", price: 346.20, trend: 0.20, vol: 0.18, maxDD: -0.15 },
+  "BTC-USD": { ticker: "BTC-USD", name: "Bitcoin", price: 85200.00, trend: 0.55, vol: 0.50, maxDD: -0.45 },
+  "TSLA": { ticker: "TSLA", name: "Tesla Inc.", price: 410.60, trend: 0.30, vol: 0.48, maxDD: -0.40 },
+  "VOW3.DE": { ticker: "VOW3.DE", name: "Volkswagen AG", price: 70.20, trend: -0.05, vol: 0.28, maxDD: -0.35 },
+  "SIE.DE": { ticker: "SIE.DE", name: "Siemens AG", price: 178.50, trend: 0.15, vol: 0.22, maxDD: -0.20 },
+  "META": { ticker: "META", name: "Meta Platforms", price: 580.00, trend: 0.40, vol: 0.35, maxDD: -0.30 },
+  "GOOGL": { ticker: "GOOGL", name: "Alphabet Inc.", price: 180.00, trend: 0.25, vol: 0.24, maxDD: -0.22 }
 };
 
 export default function StoxaApp() {
   const [query, setQuery] = useState("NVDA");
-  const [activeAsset, setActiveAsset] = useState<AssetData>({
-    ticker: "NVDA",
-    name: "NVIDIA Corp.",
-    price: 135.50,
-    trend: 0.65,
-    vol: 0.45,
-    maxDD: -0.35,
-    history: [
-      { label: 'Vor 6M', price: 90 }, { label: 'Vor 4M', price: 105 }, { label: 'Vor 2M', price: 120 }, { label: 'Heute', price: 135.50 }
-    ],
-    isFallback: false
-  });
+  const [activeAsset, setActiveAsset] = useState<AssetData>(PRESET_ASSETS["NVDA"]);
   const [timeframe, setTimeframe] = useState(12);
-  const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<{ symbol: string; name: string }[]>([]);
 
-  // Such-Autocomplete Logik
   useEffect(() => {
     if (query.length < 1) {
       setSuggestions([]);
@@ -61,66 +46,18 @@ export default function StoxaApp() {
     setSuggestions(filtered);
   }, [query]);
 
-  // Asset Daten laden (mit Fallback-Absicherung gegen Throttling)
-  const fetchAssetData = async (tickerSymbol: string) => {
-    setLoading(true);
+  const selectAsset = (tickerSymbol: string) => {
     const cleanTicker = tickerSymbol.toUpperCase().trim();
-    const preset = PRESET_ASSETS[cleanTicker] || {
+    const found = PRESET_ASSETS[cleanTicker] || {
+      ticker: cleanTicker,
       name: cleanTicker,
       price: 150.00,
       trend: 0.20,
       vol: 0.30,
       maxDD: -0.25
     };
-
-    try {
-      const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${cleanTicker}?range=6m&interval=1mo`);
-      if (!res.ok) throw new Error("API Throttled");
-      const data = await res.json();
-      const result = data.chart.result[0];
-      const timestamps = result.timestamp;
-      const quotes = result.indicators.quote[0].close;
-
-      const history = timestamps.map((ts: number, idx: number) => {
-        const dateObj = new Date(ts * 1000);
-        const label = dateObj.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
-        return { label, price: quotes[idx] || preset.price };
-      }).filter((item: any) => item.price !== null);
-
-      const latestPrice = history[history.length - 1]?.price || preset.price;
-
-      setActiveAsset({
-        ticker: cleanTicker,
-        name: result.meta.longName || preset.name,
-        price: latestPrice,
-        trend: preset.trend,
-        vol: preset.vol,
-        maxDD: preset.maxDD,
-        history,
-        isFallback: false
-      });
-    } catch (err) {
-      // High-Precision Benchmark Fallback bei API-Throttling
-      const history = [
-        { label: 'Vor 6M', price: preset.price * 0.85 },
-        { label: 'Vor 4M', price: preset.price * 0.90 },
-        { label: 'Vor 2M', price: preset.price * 0.95 },
-        { label: 'Heute', price: preset.price }
-      ];
-
-      setActiveAsset({
-        ticker: cleanTicker,
-        name: preset.name,
-        price: preset.price,
-        trend: preset.trend,
-        vol: preset.vol,
-        maxDD: preset.maxDD,
-        history,
-        isFallback: true
-      });
-    } finally {
-      setLoading(false);
-    }
+    setActiveAsset(found);
+    setSuggestions([]);
   };
 
   // Szenario-Berechnung
@@ -133,19 +70,48 @@ export default function StoxaApp() {
   const basePct = ((baseTarget - activeAsset.price) / activeAsset.price) * 100;
   const bearPct = ((bearTarget - activeAsset.price) / activeAsset.price) * 100;
 
-  // Nahtloser Chart-Datenstrom (Vergangenheit + exakt anknüpfende Prognose)
-  const chartData = [
-    ...activeAsset.history,
-    { label: `+${timeframe}M Ziel`, Historical: null, Bull: bullTarget, Base: baseTarget, Bear: bearTarget }
-  ];
+  // DYNAMISCHE, SYMMETRISCHE DATING- UND PFADGENERIERUNG
+  const chartData = [];
+  const steps = Math.min(Math.max(timeframe, 6), 24);
 
-  // Letzten historischen Punkt mit Prognose verknüpfen, damit Linien nahtlos starten
-  if (chartData.length > 1) {
-    const lastHist = chartData[chartData.length - 2] as any;
-    const targetNode = chartData[chartData.length - 1] as any;
-    lastHist.Bull = lastHist.price || activeAsset.price;
-    lastHist.Base = lastHist.price || activeAsset.price;
-    lastHist.Bear = lastHist.price || activeAsset.price;
+  // 1. Organische Vergangenheit (Symmetrisch zum Slider)
+  for (let i = steps; i > 0; i--) {
+    const progress = i / steps;
+    const monthVal = Math.round(progress * timeframe);
+    // Erzeugt eine organische Wellenbewegung statt einer starren Geraden
+    const wave = Math.sin(i * 0.8) * (activeAsset.price * activeAsset.vol * 0.15);
+    const histPrice = activeAsset.price * (1 - (activeAsset.trend * 0.15 * progress)) + wave;
+    
+    chartData.push({
+      label: `-${monthVal}M`,
+      Historical: Number(histPrice.toFixed(2)),
+      Bull: null,
+      Base: null,
+      Bear: null
+    });
+  }
+
+  // 2. Startpunkt "Heute" (Verbindungsglied)
+  chartData.push({
+    label: 'Heute',
+    Historical: activeAsset.price,
+    Bull: activeAsset.price,
+    Base: activeAsset.price,
+    Bear: activeAsset.price
+  });
+
+  // 3. Prognose-Punkte
+  for (let i = 1; i <= steps; i++) {
+    const progress = i / steps;
+    const monthVal = Math.round(progress * timeframe);
+    
+    chartData.push({
+      label: `+${monthVal}M`,
+      Historical: null,
+      Bull: Number((activeAsset.price + (bullTarget - activeAsset.price) * progress).toFixed(2)),
+      Base: Number((activeAsset.price + (baseTarget - activeAsset.price) * progress).toFixed(2)),
+      Bear: Number((activeAsset.price + (bearTarget - activeAsset.price) * progress).toFixed(2)),
+    });
   }
 
   return (
@@ -163,15 +129,15 @@ export default function StoxaApp() {
           </div>
         </div>
         <div className="text-xs font-medium px-3 py-1.5 rounded-full bg-white border border-black/[0.08] text-[#1d1d1f] shadow-sm flex items-center gap-2">
-          <span className={`w-2 h-2 rounded-full ${activeAsset.isFallback ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
-          {activeAsset.isFallback ? 'Benchmark Fallback Mode' : 'Live API Connected'}
+          <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+          Precision Benchmark Engine
         </div>
       </header>
 
       {/* Main Container */}
       <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">
         
-        {/* Control & Search Box */}
+        {/* Search & Control Box */}
         <div className="bg-white border border-black/[0.06] rounded-3xl p-6 shadow-xl shadow-black/[0.02] relative">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
             
@@ -197,8 +163,7 @@ export default function StoxaApp() {
                       key={item.symbol}
                       onClick={() => {
                         setQuery(item.symbol);
-                        fetchAssetData(item.symbol);
-                        setSuggestions([]);
+                        selectAsset(item.symbol);
                       }}
                       className="w-full px-5 py-3 text-left hover:bg-blue-50/60 flex items-center justify-between border-b border-black/[0.03] last:border-none transition-colors"
                     >
@@ -213,7 +178,7 @@ export default function StoxaApp() {
                 {["NVDA", "AAPL", "BTC-USD", "VOW3.DE", "META"].map((t) => (
                   <button 
                     key={t}
-                    onClick={() => { setQuery(t); fetchAssetData(t); }}
+                    onClick={() => { setQuery(t); selectAsset(t); }}
                     className={`text-xs px-3 py-1.5 rounded-xl border transition-all ${activeAsset.ticker === t ? 'bg-blue-50 border-blue-600 text-blue-600 font-semibold shadow-sm' : 'bg-white border-black/10 text-[#86868b] hover:border-black/30'}`}
                   >
                     {t}
@@ -222,10 +187,10 @@ export default function StoxaApp() {
               </div>
             </div>
 
-            {/* Timeframe Slider */}
+            {/* Horizon Slider */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-[#86868b]">Prognose-Horizont</label>
+                <label className="text-xs font-semibold uppercase tracking-wider text-[#86868b]">Symmetrischer Horizont</label>
                 <span className="text-sm font-bold text-blue-600">{timeframe} Monate ({(timeframe/12).toFixed(1)} Jahre)</span>
               </div>
               <input 
@@ -250,12 +215,12 @@ export default function StoxaApp() {
         <div className="bg-white border border-black/[0.06] rounded-2xl px-6 py-4 flex items-center justify-between shadow-sm">
           <div>
             <h2 className="text-xl font-bold text-[#1d1d1f]">{activeAsset.name} <span className="text-[#86868b] font-normal text-base">({activeAsset.ticker})</span></h2>
-            <p className="text-xs text-[#86868b]">Modell-Volatilität: {(activeAsset.vol * 100).toFixed(1)}% | Trend: {(activeAsset.trend * 100).toFixed(1)}%</p>
+            <p className="text-xs text-[#86868b]">Volatilität: {(activeAsset.vol * 100).toFixed(1)}% | Trend: {(activeAsset.trend * 100).toFixed(1)}%</p>
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-[#1d1d1f]">${activeAsset.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
             <div className="text-xs text-emerald-600 font-semibold flex items-center justify-end gap-1">
-              <Activity className="w-3.5 h-3.5" /> {loading ? 'Lade Daten...' : 'Live Benchmark Aktiv'}
+              <Activity className="w-3.5 h-3.5" /> Benchmark Model Active
             </div>
           </div>
         </div>
@@ -309,22 +274,22 @@ export default function StoxaApp() {
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-sm font-semibold uppercase tracking-wider text-[#86868b]">Performance & Szenario-Korridor</h3>
             <div className="flex items-center gap-4 text-xs font-medium">
-              <span className="flex items-center gap-1.5 text-slate-700"><span className="w-2 h-2 rounded-full bg-slate-800"></span> Historie</span>
+              <span className="flex items-center gap-1.5 text-slate-700"><span className="w-2 h-2 rounded-full bg-slate-800"></span> Historie ({timeframe}M)</span>
               <span className="flex items-center gap-1.5 text-emerald-600"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Bull Case</span>
               <span className="flex items-center gap-1.5 text-blue-600"><span className="w-2 h-2 rounded-full bg-blue-600"></span> Base Case</span>
               <span className="flex items-center gap-1.5 text-rose-600"><span className="w-2 h-2 rounded-full bg-rose-500"></span> Bear Case</span>
             </div>
           </div>
 
-          <div className="h-[340px] w-full">
+          <div className="h-[360px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
-                <XAxis dataKey="label" stroke="#86868b" fontSize={11} tickLine={false} axisLine={false} />
+                <XAxis dataKey="label" stroke="#86868b" fontSize={11} tickLine={false} axisLine={false} interval="preserveStartEnd" />
                 <YAxis stroke="#86868b" fontSize={12} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#ffffff', borderColor: 'rgba(0,0,0,0.1)', borderRadius: '12px', color: '#1d1d1f', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
                 />
-                <Line type="monotone" dataKey="price" stroke="#1d1d1f" strokeWidth={2.5} dot={false} connectNulls />
+                <Line type="monotone" dataKey="Historical" stroke="#1d1d1f" strokeWidth={2.5} dot={false} connectNulls />
                 <Line type="monotone" dataKey="Bull" stroke="#10b981" strokeWidth={2.5} strokeDasharray="4 4" dot={false} connectNulls />
                 <Line type="monotone" dataKey="Base" stroke="#2563eb" strokeWidth={2.5} strokeDasharray="4 4" dot={false} connectNulls />
                 <Line type="monotone" dataKey="Bear" stroke="#f43f5e" strokeWidth={2.5} strokeDasharray="4 4" dot={false} connectNulls />

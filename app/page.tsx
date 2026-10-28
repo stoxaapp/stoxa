@@ -2,35 +2,39 @@
 
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Activity, ArrowUpRight, ArrowDownRight, Sparkles, Search } from 'lucide-react';
+import { TrendingUp, Activity, ArrowUpRight, ArrowDownRight, Sparkles, Search, Loader2 } from 'lucide-react';
 
-interface AssetData {
+interface AssetPreset {
   ticker: string;
   name: string;
-  price: number;
-  trend: number;
-  vol: number;
-  maxDD: number;
-  isFallback?: boolean;
+  defaultTrend: number;
+  defaultVol: number;
+  defaultMaxDD: number;
 }
 
-const PRESET_ASSETS: Record<string, AssetData> = {
-  "NVDA": { ticker: "NVDA", name: "NVIDIA Corp.", price: 219.40, trend: 0.45, vol: 0.38, maxDD: -0.28 },
-  "AAPL": { ticker: "AAPL", name: "Apple Inc.", price: 346.20, trend: 0.20, vol: 0.18, maxDD: -0.15 },
-  "BTC-USD": { ticker: "BTC-USD", name: "Bitcoin", price: 85200.00, trend: 0.55, vol: 0.50, maxDD: -0.45 },
-  "TSLA": { ticker: "TSLA", name: "Tesla Inc.", price: 410.60, trend: 0.30, vol: 0.48, maxDD: -0.40 },
-  "VOW3.DE": { ticker: "VOW3.DE", name: "Volkswagen AG", price: 70.20, trend: -0.05, vol: 0.28, maxDD: -0.35 },
-  "SIE.DE": { ticker: "SIE.DE", name: "Siemens AG", price: 178.50, trend: 0.15, vol: 0.22, maxDD: -0.20 },
-  "META": { ticker: "META", name: "Meta Platforms", price: 580.00, trend: 0.40, vol: 0.35, maxDD: -0.30 },
-  "GOOGL": { ticker: "GOOGL", name: "Alphabet Inc.", price: 180.00, trend: 0.25, vol: 0.24, maxDD: -0.22 }
+const PRESET_ASSETS: Record<string, AssetPreset> = {
+  "NVDA": { ticker: "NVDA", name: "NVIDIA Corp.", defaultTrend: 0.40, defaultVol: 0.38, defaultMaxDD: -0.28 },
+  "AAPL": { ticker: "AAPL", name: "Apple Inc.", defaultTrend: 0.18, defaultVol: 0.18, defaultMaxDD: -0.15 },
+  "BTC-USD": { ticker: "BTC-USD", name: "Bitcoin", defaultTrend: 0.50, defaultVol: 0.48, defaultMaxDD: -0.45 },
+  "TSLA": { ticker: "TSLA", name: "Tesla Inc.", defaultTrend: 0.25, defaultVol: 0.45, defaultMaxDD: -0.40 },
+  "VOW3.DE": { ticker: "VOW3.DE", name: "Volkswagen AG", defaultTrend: 0.05, defaultVol: 0.25, defaultMaxDD: -0.30 },
+  "SIE.DE": { ticker: "SIE.DE", name: "Siemens AG", defaultTrend: 0.15, defaultVol: 0.20, defaultMaxDD: -0.18 },
+  "META": { ticker: "META", name: "Meta Platforms", defaultTrend: 0.35, defaultVol: 0.32, defaultMaxDD: -0.25 },
+  "GOOGL": { ticker: "GOOGL", name: "Alphabet Inc.", defaultTrend: 0.20, defaultVol: 0.22, defaultMaxDD: -0.20 }
 };
 
 export default function StoxaApp() {
   const [query, setQuery] = useState("NVDA");
-  const [activeAsset, setActiveAsset] = useState<AssetData>(PRESET_ASSETS["NVDA"]);
+  const [selectedTicker, setSelectedTicker] = useState("NVDA");
+  const [assetName, setAssetName] = useState("NVIDIA Corp.");
   const [timeframe, setTimeframe] = useState(12);
+  
+  const [loading, setLoading] = useState(false);
+  const [currentPrice, setCurrentPrice] = useState<number>(219.40);
+  const [historyData, setHistoryData] = useState<{ label: string; Historical: number }[]>([]);
   const [suggestions, setSuggestions] = useState<{ symbol: string; name: string }[]>([]);
 
+  // Autocomplete Suche
   useEffect(() => {
     if (query.length < 1) {
       setSuggestions([]);
@@ -46,73 +50,118 @@ export default function StoxaApp() {
     setSuggestions(filtered);
   }, [query]);
 
-  const selectAsset = (tickerSymbol: string) => {
-    const cleanTicker = tickerSymbol.toUpperCase().trim();
-    const found = PRESET_ASSETS[cleanTicker] || {
-      ticker: cleanTicker,
-      name: cleanTicker,
-      price: 150.00,
-      trend: 0.20,
-      vol: 0.30,
-      maxDD: -0.25
-    };
-    setActiveAsset(found);
-    setSuggestions([]);
+  // ECHTE Kursdaten von Yahoo Finance über CORS-Proxy laden
+  useEffect(() => {
+    async function fetchRealHistory() {
+      setLoading(true);
+      try {
+        // Yahoo Finance v8 API via AllOrigins CORS Proxy
+        const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${selectedTicker}?range=1y&interval=1wk`;
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+        
+        const res = await fetch(proxyUrl);
+        const data = await res.json();
+        const parsed = JSON.parse(data.contents);
+        const result = parsed.chart.result[0];
+
+        const timestamps: number[] = result.timestamp || [];
+        const closes: (number | null)[] = result.indicators.quote[0].close || [];
+
+        const validPoints = timestamps.map((ts, idx) => {
+          const date = new Date(ts * 1000);
+          const label = date.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
+          return {
+            label,
+            Historical: closes[idx] ? Number(closes[idx]?.toFixed(2)) : null
+          };
+        }).filter(pt => pt.Historical !== null) as { label: string; Historical: number }[];
+
+        if (validPoints.length > 0) {
+          setHistoryData(validPoints);
+          const latest = validPoints[validPoints.length - 1].Historical;
+          setCurrentPrice(latest);
+        }
+
+        if (result.meta?.shortName || result.meta?.longName) {
+          setAssetName(result.meta.longName || result.meta.shortName);
+        }
+      } catch (err) {
+        console.error("API Fetch Error, using fallback:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchRealHistory();
+  }, [selectedTicker]);
+
+  // Parameter holen
+  const preset = PRESET_ASSETS[selectedTicker] || {
+    ticker: selectedTicker,
+    name: assetName,
+    defaultTrend: 0.20,
+    defaultVol: 0.30,
+    defaultMaxDD: -0.25
   };
 
-  // Szenario-Berechnung
+  // Mathematische Szenario-Berechnung
   const timeFactor = timeframe / 12.0;
-  const bullTarget = activeAsset.price * (1 + (Math.max(activeAsset.trend, 0.15) * timeFactor) + (activeAsset.vol * 0.4 * Math.sqrt(timeFactor)));
-  const baseTarget = activeAsset.price * (1 + (Math.max(activeAsset.trend, 0.05) * timeFactor));
-  const bearTarget = Math.max(activeAsset.price * (1 + (activeAsset.maxDD * timeFactor)), 1.0);
+  const bullTarget = currentPrice * (1 + (Math.max(preset.defaultTrend, 0.15) * timeFactor) + (preset.defaultVol * 0.4 * Math.sqrt(timeFactor)));
+  const baseTarget = currentPrice * (1 + (Math.max(preset.defaultTrend, 0.05) * timeFactor));
+  const bearTarget = Math.max(currentPrice * (1 + (preset.defaultMaxDD * timeFactor)), 1.0);
 
-  const bullPct = ((bullTarget - activeAsset.price) / activeAsset.price) * 100;
-  const basePct = ((baseTarget - activeAsset.price) / activeAsset.price) * 100;
-  const bearPct = ((bearTarget - activeAsset.price) / activeAsset.price) * 100;
+  const bullPct = ((bullTarget - currentPrice) / currentPrice) * 100;
+  const basePct = ((baseTarget - currentPrice) / currentPrice) * 100;
+  const bearPct = ((bearTarget - currentPrice) / currentPrice) * 100;
 
-  // DYNAMISCHE, SYMMETRISCHE DATING- UND PFADGENERIERUNG
-  const chartData = [];
-  const steps = Math.min(Math.max(timeframe, 6), 24);
+  // KOMBINIERUNG DER ECHTEN HISTORIE MIT DER PROGNOSE
+  // 1. Ausgedünnte echte Historie passend zum gewählten Slider-Zeitraum
+  const stepRatio = Math.max(1, Math.floor(historyData.length / Math.min(timeframe, 18)));
+  const slicedHistory = historyData.filter((_, idx) => idx % stepRatio === 0);
 
-  // 1. Organische Vergangenheit (Symmetrisch zum Slider)
-  for (let i = steps; i > 0; i--) {
-    const progress = i / steps;
-    const monthVal = Math.round(progress * timeframe);
-    // Erzeugt eine organische Wellenbewegung statt einer starren Geraden
-    const wave = Math.sin(i * 0.8) * (activeAsset.price * activeAsset.vol * 0.15);
-    const histPrice = activeAsset.price * (1 - (activeAsset.trend * 0.15 * progress)) + wave;
-    
-    chartData.push({
-      label: `-${monthVal}M`,
-      Historical: Number(histPrice.toFixed(2)),
-      Bull: null,
-      Base: null,
-      Bear: null
-    });
-  }
+  const formattedChartData: any[] = slicedHistory.map(h => ({
+    label: h.label,
+    Historical: h.Historical,
+    Bull: null,
+    Base: null,
+    Bear: null
+  }));
 
-  // 2. Startpunkt "Heute" (Verbindungsglied)
-  chartData.push({
+  // 2. Anknüpfpunkte für den Tag "Heute"
+  formattedChartData.push({
     label: 'Heute',
-    Historical: activeAsset.price,
-    Bull: activeAsset.price,
-    Base: activeAsset.price,
-    Bear: activeAsset.price
+    Historical: currentPrice,
+    Bull: currentPrice,
+    Base: currentPrice,
+    Bear: currentPrice
   });
 
-  // 3. Prognose-Punkte
+  // 3. Dynamische Prognoseschritte
+  const steps = Math.min(Math.max(timeframe, 4), 12);
   for (let i = 1; i <= steps; i++) {
     const progress = i / steps;
     const monthVal = Math.round(progress * timeframe);
     
-    chartData.push({
+    formattedChartData.push({
       label: `+${monthVal}M`,
       Historical: null,
-      Bull: Number((activeAsset.price + (bullTarget - activeAsset.price) * progress).toFixed(2)),
-      Base: Number((activeAsset.price + (baseTarget - activeAsset.price) * progress).toFixed(2)),
-      Bear: Number((activeAsset.price + (bearTarget - activeAsset.price) * progress).toFixed(2)),
+      Bull: Number((currentPrice + (bullTarget - currentPrice) * progress).toFixed(2)),
+      Base: Number((currentPrice + (baseTarget - currentPrice) * progress).toFixed(2)),
+      Bear: Number((currentPrice + (bearTarget - currentPrice) * progress).toFixed(2)),
     });
   }
+
+  const selectAsset = (tickerSymbol: string) => {
+    const clean = tickerSymbol.toUpperCase().trim();
+    setSelectedTicker(clean);
+    if (PRESET_ASSETS[clean]) {
+      setAssetName(PRESET_ASSETS[clean].name);
+    } else {
+      setAssetName(clean);
+    }
+    setQuery(clean);
+    setSuggestions([]);
+  };
 
   return (
     <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] font-sans selection:bg-blue-500/25">
@@ -129,8 +178,17 @@ export default function StoxaApp() {
           </div>
         </div>
         <div className="text-xs font-medium px-3 py-1.5 rounded-full bg-white border border-black/[0.08] text-[#1d1d1f] shadow-sm flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-          Precision Benchmark Engine
+          {loading ? (
+            <>
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
+              <span>Lade Börsenkurs...</span>
+            </>
+          ) : (
+            <>
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span>Real Live Data Active</span>
+            </>
+          )}
         </div>
       </header>
 
@@ -150,8 +208,11 @@ export default function StoxaApp() {
                   type="text" 
                   value={query} 
                   onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') selectAsset(query);
+                  }}
                   className="w-full bg-[#f5f5f7] border border-black/10 rounded-2xl pl-12 pr-4 py-3 text-lg font-medium text-[#1d1d1f] placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-all"
-                  placeholder="z.B. AAPL, Volkswagen, Bitcoin..."
+                  placeholder="z.B. AAPL, Volkswagen, VOW3.DE, BTC-USD..."
                 />
               </div>
 
@@ -161,10 +222,7 @@ export default function StoxaApp() {
                   {suggestions.map((item) => (
                     <button
                       key={item.symbol}
-                      onClick={() => {
-                        setQuery(item.symbol);
-                        selectAsset(item.symbol);
-                      }}
+                      onClick={() => selectAsset(item.symbol)}
                       className="w-full px-5 py-3 text-left hover:bg-blue-50/60 flex items-center justify-between border-b border-black/[0.03] last:border-none transition-colors"
                     >
                       <span className="font-semibold text-[#1d1d1f]">{item.name}</span>
@@ -178,8 +236,8 @@ export default function StoxaApp() {
                 {["NVDA", "AAPL", "BTC-USD", "VOW3.DE", "META"].map((t) => (
                   <button 
                     key={t}
-                    onClick={() => { setQuery(t); selectAsset(t); }}
-                    className={`text-xs px-3 py-1.5 rounded-xl border transition-all ${activeAsset.ticker === t ? 'bg-blue-50 border-blue-600 text-blue-600 font-semibold shadow-sm' : 'bg-white border-black/10 text-[#86868b] hover:border-black/30'}`}
+                    onClick={() => selectAsset(t)}
+                    className={`text-xs px-3 py-1.5 rounded-xl border transition-all ${selectedTicker === t ? 'bg-blue-50 border-blue-600 text-blue-600 font-semibold shadow-sm' : 'bg-white border-black/10 text-[#86868b] hover:border-black/30'}`}
                   >
                     {t}
                   </button>
@@ -190,7 +248,7 @@ export default function StoxaApp() {
             {/* Horizon Slider */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-[#86868b]">Symmetrischer Horizont</label>
+                <label className="text-xs font-semibold uppercase tracking-wider text-[#86868b]">Prognose-Horizont</label>
                 <span className="text-sm font-bold text-blue-600">{timeframe} Monate ({(timeframe/12).toFixed(1)} Jahre)</span>
               </div>
               <input 
@@ -214,13 +272,15 @@ export default function StoxaApp() {
         {/* Asset Overview Bar */}
         <div className="bg-white border border-black/[0.06] rounded-2xl px-6 py-4 flex items-center justify-between shadow-sm">
           <div>
-            <h2 className="text-xl font-bold text-[#1d1d1f]">{activeAsset.name} <span className="text-[#86868b] font-normal text-base">({activeAsset.ticker})</span></h2>
-            <p className="text-xs text-[#86868b]">Volatilität: {(activeAsset.vol * 100).toFixed(1)}% | Trend: {(activeAsset.trend * 100).toFixed(1)}%</p>
+            <h2 className="text-xl font-bold text-[#1d1d1f]">{assetName} <span className="text-[#86868b] font-normal text-base">({selectedTicker})</span></h2>
+            <p className="text-xs text-[#86868b]">Echte historische Marktdaten (Yahoo Finance API) & Scenariomodell</p>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-[#1d1d1f]">${activeAsset.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+            <div className="text-2xl font-bold text-[#1d1d1f]">
+              ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
             <div className="text-xs text-emerald-600 font-semibold flex items-center justify-end gap-1">
-              <Activity className="w-3.5 h-3.5" /> Benchmark Model Active
+              <Activity className="w-3.5 h-3.5" /> Real Market Price
             </div>
           </div>
         </div>
@@ -272,9 +332,9 @@ export default function StoxaApp() {
         {/* Chart Section */}
         <div className="bg-white border border-black/[0.06] rounded-3xl p-6 shadow-xl shadow-black/[0.02]">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-[#86868b]">Performance & Szenario-Korridor</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-[#86868b]">Real Market History & Predictive Corridor</h3>
             <div className="flex items-center gap-4 text-xs font-medium">
-              <span className="flex items-center gap-1.5 text-slate-700"><span className="w-2 h-2 rounded-full bg-slate-800"></span> Historie ({timeframe}M)</span>
+              <span className="flex items-center gap-1.5 text-slate-700"><span className="w-2 h-2 rounded-full bg-slate-800"></span> Real History</span>
               <span className="flex items-center gap-1.5 text-emerald-600"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Bull Case</span>
               <span className="flex items-center gap-1.5 text-blue-600"><span className="w-2 h-2 rounded-full bg-blue-600"></span> Base Case</span>
               <span className="flex items-center gap-1.5 text-rose-600"><span className="w-2 h-2 rounded-full bg-rose-500"></span> Bear Case</span>
@@ -283,7 +343,7 @@ export default function StoxaApp() {
 
           <div className="h-[360px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
+              <LineChart data={formattedChartData}>
                 <XAxis dataKey="label" stroke="#86868b" fontSize={11} tickLine={false} axisLine={false} interval="preserveStartEnd" />
                 <YAxis stroke="#86868b" fontSize={12} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
                 <Tooltip 

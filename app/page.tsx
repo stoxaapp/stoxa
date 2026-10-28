@@ -34,7 +34,7 @@ export default function StoxaApp() {
   const [historyData, setHistoryData] = useState<{ label: string; price: number }[]>([]);
   const [suggestions, setSuggestions] = useState<{ symbol: string; name: string }[]>([]);
 
-  // 1-Klick Asset Auswahl ohne Doppel-Bestätigung
+  // 1-Klick Auswahl über onMouseDown, damit das Dropdown sofort reagiert
   const handleSelectAsset = useCallback((tickerSymbol: string) => {
     const clean = tickerSymbol.toUpperCase().trim();
     if (!clean) return;
@@ -50,7 +50,7 @@ export default function StoxaApp() {
     }
   }, []);
 
-  // Autocomplete Echtzeitfilter
+  // Autocomplete Filter
   useEffect(() => {
     if (query.length < 1) {
       setSuggestions([]);
@@ -66,32 +66,31 @@ export default function StoxaApp() {
     setSuggestions(filtered);
   }, [query]);
 
-  // Echte historische Daten abrufen (dynamisch je nach gewähltem Zeitfenster)
+  // Echte Tagesdaten (interval=1d) für unglätteten, echten Kursverlauf
   useEffect(() => {
     let isMounted = true;
 
     async function fetchRealHistory() {
       setLoading(true);
       try {
-        // Range dynamisch an den Horizont anpassen (max 2 Jahre)
         const rangeStr = timeframe > 24 ? '2y' : '1y';
-        const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${selectedTicker}?range=${rangeStr}&interval=1mo`;
+        const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${selectedTicker}?range=${rangeStr}&interval=1d`;
         const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
         
         const res = await fetch(proxyUrl);
-        if (!res.ok) throw new Error('Network response was not ok');
+        if (!res.ok) throw new Error('Network error');
         
         const parsed = await res.json();
         const result = parsed.chart?.result?.[0];
 
-        if (!result) throw new Error('No chart data found');
+        if (!result) throw new Error('No data');
 
         const timestamps: number[] = result.timestamp || [];
         const closes: (number | null)[] = result.indicators?.quote?.[0]?.close || [];
 
         const validPoints = timestamps.map((ts, idx) => {
           const date = new Date(ts * 1000);
-          const label = date.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
+          const label = date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
           return {
             label,
             price: closes[idx] ? Number(closes[idx]?.toFixed(2)) : null
@@ -112,10 +111,9 @@ export default function StoxaApp() {
           const basePrice = 150;
           setCurrentPrice(basePrice);
           setHistoryData([
-            { label: 'Vor 12M', price: basePrice * 0.80 },
-            { label: 'Vor 9M', price: basePrice * 0.85 },
-            { label: 'Vor 6M', price: basePrice * 0.92 },
-            { label: 'Vor 3M', price: basePrice * 0.97 },
+            { label: '01.01.24', price: basePrice * 0.80 },
+            { label: '01.04.24', price: basePrice * 0.88 },
+            { label: '01.07.24', price: basePrice * 0.95 },
             { label: 'Heute', price: basePrice }
           ]);
         }
@@ -129,7 +127,6 @@ export default function StoxaApp() {
     return () => { isMounted = false; };
   }, [selectedTicker, timeframe]);
 
-  // Parameter holen
   const preset = PRESET_ASSETS[selectedTicker] || {
     ticker: selectedTicker,
     name: assetName,
@@ -138,7 +135,6 @@ export default function StoxaApp() {
     defaultMaxDD: -0.25
   };
 
-  // Mathematische Szenario-Berechnung
   const timeFactor = timeframe / 12.0;
   const bullTarget = currentPrice * (1 + (Math.max(preset.defaultTrend, 0.15) * timeFactor) + (preset.defaultVol * 0.4 * Math.sqrt(timeFactor)));
   const baseTarget = currentPrice * (1 + (Math.max(preset.defaultTrend, 0.05) * timeFactor));
@@ -148,23 +144,18 @@ export default function StoxaApp() {
   const basePct = ((baseTarget - currentPrice) / currentPrice) * 100;
   const bearPct = ((bearTarget - currentPrice) / currentPrice) * 100;
 
-  // SYMMETRISCHE SYNCHRONISATION VON HISTORIE UND PROGNOSE
-  // Wir nehmen exakt so viele historische Punkte wie der Prognose-Horizont erfordert
-  const requiredHistoryCount = Math.min(Math.max(Math.floor(timeframe / 2), 3), historyData.length);
+  // Auswählen der exakten Anzahl passender Punkte für die Historie
+  const requiredHistoryCount = Math.min(Math.max(timeframe * 4, 10), historyData.length);
   const slicedHistory = historyData.slice(-requiredHistoryCount);
 
-  const formattedChartData: any[] = slicedHistory.map((h, idx) => {
-    const monthsAgo = Math.round(((slicedHistory.length - idx) / slicedHistory.length) * timeframe);
-    return {
-      label: `-${monthsAgo}M`,
-      Historical: h.price,
-      Bull: null,
-      Base: null,
-      Bear: null
-    };
-  });
+  const formattedChartData: any[] = slicedHistory.map((h) => ({
+    label: h.label,
+    Historical: h.price,
+    Bull: null,
+    Base: null,
+    Bear: null
+  }));
 
-  // Verbindungsstück "Heute"
   formattedChartData.push({
     label: 'Heute',
     Historical: currentPrice,
@@ -173,8 +164,7 @@ export default function StoxaApp() {
     Bear: currentPrice
   });
 
-  // Symmetrische Prognose-Schritte (gleiche Anzahl an Schritten wie Historie)
-  const futureSteps = Math.max(formattedChartData.length - 1, 4);
+  const futureSteps = Math.max(Math.floor(formattedChartData.length / 2), 5);
   for (let i = 1; i <= futureSteps; i++) {
     const progress = i / futureSteps;
     const monthVal = Math.round(progress * timeframe);
@@ -206,12 +196,12 @@ export default function StoxaApp() {
           {loading ? (
             <>
               <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
-              <span>Lade Börsendaten...</span>
+              <span>Lade Tagesdaten...</span>
             </>
           ) : (
             <>
               <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span>Real Live Data Active</span>
+              <span>Real Daily Data Active</span>
             </>
           )}
         </div>
@@ -224,7 +214,7 @@ export default function StoxaApp() {
         <div className="bg-white border border-black/[0.06] rounded-3xl p-6 shadow-xl shadow-black/[0.02] relative">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
             
-            {/* Search Input & 1-Click Autocomplete */}
+            {/* Search Input & 1-Click Autocomplete (onMouseDown fix) */}
             <div className="relative">
               <label className="block text-xs font-semibold uppercase tracking-wider text-[#86868b] mb-2">Asset Suchen (Ticker oder Name)</label>
               <div className="relative">
@@ -241,18 +231,21 @@ export default function StoxaApp() {
                 />
               </div>
 
-              {/* 1-Click Dropdown */}
+              {/* Dropdown mit onMouseDown für sofortigen 1-Klick */}
               {suggestions.length > 0 && (
                 <div className="absolute left-0 right-0 mt-2 bg-white border border-black/[0.08] rounded-2xl shadow-2xl z-50 overflow-hidden">
                   {suggestions.map((item) => (
-                    <button
+                    <div
                       key={item.symbol}
-                      onClick={() => handleSelectAsset(item.symbol)}
-                      className="w-full px-5 py-3 text-left hover:bg-blue-50/60 flex items-center justify-between border-b border-black/[0.03] last:border-none transition-colors"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        handleSelectAsset(item.symbol);
+                      }}
+                      className="w-full px-5 py-3 text-left hover:bg-blue-50/60 flex items-center justify-between border-b border-black/[0.03] last:border-none cursor-pointer transition-colors"
                     >
                       <span className="font-semibold text-[#1d1d1f]">{item.name}</span>
                       <span className="text-xs px-2.5 py-1 rounded-lg bg-slate-100 text-blue-600 font-bold">{item.symbol}</span>
-                    </button>
+                    </div>
                   ))}
                 </div>
               )}
@@ -298,14 +291,14 @@ export default function StoxaApp() {
         <div className="bg-white border border-black/[0.06] rounded-2xl px-6 py-4 flex items-center justify-between shadow-sm">
           <div>
             <h2 className="text-xl font-bold text-[#1d1d1f]">{assetName} <span className="text-[#86868b] font-normal text-base">({selectedTicker})</span></h2>
-            <p className="text-xs text-[#86868b]">Symmetrischer Verlauf: Historie skaliert proportional zu {timeframe}M Prognose</p>
+            <p className="text-xs text-[#86868b]">Echte historische Tageskurse (Unglättet) & Symmetrische Prognose</p>
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-[#1d1d1f]">
               ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <div className="text-xs text-emerald-600 font-semibold flex items-center justify-end gap-1">
-              <Activity className="w-3.5 h-3.5" /> Real Market Price
+              <Activity className="w-3.5 h-3.5" /> Real Daily Data Active
             </div>
           </div>
         </div>
@@ -357,16 +350,16 @@ export default function StoxaApp() {
         {/* Chart Section */}
         <div className="bg-white border border-black/[0.06] rounded-3xl p-6 shadow-xl shadow-black/[0.02]">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-[#86868b]">Symmetrical Market History & Predictive Corridor</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-[#86868b]">Real Unglättete Tageskurse & Szenario-Korridor</h3>
             <div className="flex items-center gap-4 text-xs font-medium">
-              <span className="flex items-center gap-1.5 text-slate-700"><span className="w-2 h-2 rounded-full bg-slate-800"></span> Real History</span>
+              <span className="flex items-center gap-1.5 text-slate-700"><span className="w-2 h-2 rounded-full bg-slate-800"></span> Real History (Daily)</span>
               <span className="flex items-center gap-1.5 text-emerald-600"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Bull Case</span>
               <span className="flex items-center gap-1.5 text-blue-600"><span className="w-2 h-2 rounded-full bg-blue-600"></span> Base Case</span>
               <span className="flex items-center gap-1.5 text-rose-600"><span className="w-2 h-2 rounded-full bg-rose-500"></span> Bear Case</span>
             </div>
           </div>
 
-          <div className="h-[360px] w-full">
+          <div className="h-[380px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={formattedChartData}>
                 <XAxis dataKey="label" stroke="#86868b" fontSize={11} tickLine={false} axisLine={false} interval="preserveStartEnd" />
@@ -374,10 +367,10 @@ export default function StoxaApp() {
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#ffffff', borderColor: 'rgba(0,0,0,0.1)', borderRadius: '12px', color: '#1d1d1f', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
                 />
-                <Line type="monotone" dataKey="Historical" stroke="#1d1d1f" strokeWidth={2.5} dot={false} connectNulls />
-                <Line type="monotone" dataKey="Bull" stroke="#10b981" strokeWidth={2.5} strokeDasharray="4 4" dot={false} connectNulls />
-                <Line type="monotone" dataKey="Base" stroke="#2563eb" strokeWidth={2.5} strokeDasharray="4 4" dot={false} connectNulls />
-                <Line type="monotone" dataKey="Bear" stroke="#f43f5e" strokeWidth={2.5} strokeDasharray="4 4" dot={false} connectNulls />
+                <Line type="monotone" dataKey="Historical" stroke="#1d1d1f" strokeWidth={2} dot={false} connectNulls />
+                <Line type="monotone" dataKey="Bull" stroke="#10b981" strokeWidth={2} strokeDasharray="4 4" dot={false} connectNulls />
+                <Line type="monotone" dataKey="Base" stroke="#2563eb" strokeWidth={2} strokeDasharray="4 4" dot={false} connectNulls />
+                <Line type="monotone" dataKey="Bear" stroke="#f43f5e" strokeWidth={2} strokeDasharray="4 4" dot={false} connectNulls />
               </LineChart>
             </ResponsiveContainer>
           </div>

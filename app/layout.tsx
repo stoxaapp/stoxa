@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Stoxa // Financial Scenario Engine",
@@ -13,7 +12,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased bg-[#07090e]">{children}</body>
+      <head>
+        {/* Tailwind CSS v3 CDN for instant, flawless styling */}
+        <script src="https://cdn.tailwindcss.com"></script>
+      </head>
+      <body className="antialiased bg-[#07090e] text-[#f1f5f9] min-h-screen">
+        {children}
+      </body>
     </html>
   );
 }

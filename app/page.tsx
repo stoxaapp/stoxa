@@ -680,31 +680,31 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
             </div>
             <div className="p-6 overflow-y-auto space-y-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
               <div>
-                <strong className="block text-[#1d1d1f] dark:text-white mb-1">Information according to § 5 TMG / Telemediengesetz</strong>
+                <strong className="block text-[#1d1d1f] dark:text-white mb-1">Information according to § 5 TMG</strong>
                 <p>
-                  [Your Full Name / Company Name]<br />
-                  [Your Street & House Number]<br />
-                  [Your Postal Code & City]<br />
-                  [Your Country, e.g., Germany]
+                  {SITE_CONFIG.owner.name}<br />
+                  {SITE_CONFIG.owner.street}<br />
+                  {SITE_CONFIG.owner.city}<br />
+                  {SITE_CONFIG.owner.country}
                 </p>
               </div>
 
               <div>
                 <strong className="block text-[#1d1d1f] dark:text-white mb-1">Contact Information</strong>
                 <p>
-                  Email: [Your Real Email Address]<br />
+                  Email: {SITE_CONFIG.owner.email}<br />
                   Website: {SITE_CONFIG.domain}
                 </p>
               </div>
 
               <div>
-                <strong className="block text-[#1d1d1f] dark:text-white mb-1">Disclaimer & Simulation Scope</strong>
-                {SITE_CONFIG.name} is an independent financial simulation and educational research tool. All generated price corridors, scenario projections, volatility scores, and briefing reports are calculated automatically using historical market data algorithms.
+                <strong className="block text-[#1d1d1f] dark:text-white mb-1">Disclaimer</strong>
+                {SITE_CONFIG.disclaimer}
               </div>
 
               <div>
-                <strong className="block text-[#1d1d1f] dark:text-white mb-1">No Financial Advice</strong>
-                The content provided on this platform does not constitute investment advice, financial advice, trading advice, or any other sort of advice. You should not treat any of the platform's content as such. Always conduct your own due diligence and consult a certified financial advisor before making any investment decisions.
+                <strong className="block text-[#1d1d1f] dark:text-white mb-1">Privacy Statement</strong>
+                {SITE_CONFIG.privacyText}
               </div>
             </div>
             <div className="px-6 py-3 bg-slate-50 dark:bg-slate-950 border-t border-black/[0.06] dark:border-slate-800 flex justify-end">

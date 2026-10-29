@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, Activity, ArrowUpRight, ArrowDownRight, Search, Loader2, X, ShieldCheck, HelpCircle, Sun, Moon, Newspaper, ExternalLink, Sparkles, ShieldAlert } from 'lucide-react';
 import { SITE_CONFIG } from './config/site';
+import AIQuickBriefing from '@/components/AIQuickBriefing';
 
 interface AssetDetail {
   symbol: string;
@@ -386,6 +387,21 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
               Max Drawdown: <span className="font-semibold text-slate-700 dark:text-slate-200">{(assetData.maxDD * 100).toFixed(1)}%</span>
             </p>
           </div>
+
+<div className="flex items-center justify-between mb-4">
+  <h1 className="text-2xl font-bold">{ticker} Overview</h1>
+  
+  {/* Hier wird der AI-Button eingebunden */}
+  <AIQuickBriefing 
+    ticker={ticker} 
+    volatilityScore={volatilityScore} 
+    currentPrice={currentPrice} 
+    bullTarget={bullTarget} 
+    bearTarget={bearTarget} 
+  />
+</div>
+
+          
           <div className="text-right">
             <div className="text-2xl font-bold text-[#1d1d1f] dark:text-white">
               ${assetData.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

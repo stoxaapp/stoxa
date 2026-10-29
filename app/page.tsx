@@ -167,13 +167,38 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
 
   const historyPoints = assetData.history || [];
 
-  const formattedChartData: any[] = historyPoints.map(h => ({
-    label: h.date,
-    Historical: h.price,
-    Bull: null,
-    Base: null,
-    Bear: null
-  }));
+  // Sauberer Monatsfilter für die X-Achse: Zeige nur ein Label pro Monat
+  let lastSeenMonth = "";
+  const formattedChartData: any[] = historyPoints.map((h, idx) => {
+    const d = new Date(h.date);
+    const monthKey = !isNaN(d.getTime()) 
+      ? `${d.getFullYear()}-${d.getMonth()}` 
+      : h.date.substring(0, 6); // Fallback
+
+    const isFirstOfदेख = monthKey !== lastSeenMonth;
+    if (isFirstOfदेख) {
+      lastSeenMonth = monthKey;
+    }
+
+    // Nur beim Monatswechsel ein Label anzeigen, sonst leer lassen
+    let label = "";
+    if (isFirstOfदेख || idx === 0 || idx === historyPoints.length - 1) {
+      if (!isNaN(d.getTime())) {
+        label = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }); // z.B. "Jan 26"
+      } else {
+        label = h.date;
+      }
+    }
+
+    return {
+      label,
+      rawDate: h.date,
+      Historical: h.price,
+      Bull: null,
+      Base: null,
+      Bear: null
+    };
+  });
 
   if (formattedChartData.length > 0) {
     const last = formattedChartData[formattedChartData.length - 1];
@@ -182,17 +207,30 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
     last.Bear = assetData.currentPrice;
   }
 
-  const futureSteps = Math.max(historyPoints.length, 10);
+  const futureSteps = Math.max(historyPoints.length, 12);
   const currentDate = new Date();
+  let lastFutureMonth = "";
 
   for (let i = 1; i <= futureSteps; i++) {
     const progress = i / futureSteps;
     const daysAhead = Math.round(progress * (timeframe * 30));
     const futureDate = new Date(currentDate.getTime() + daysAhead * 24 * 60 * 60 * 1000);
-    const label = futureDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+    
+    const monthKey = `${futureDate.getFullYear()}-${futureDate.getMonth()}`;
+    const isNewMonth = monthKey !== lastFutureMonth;
+    if (isNewMonth) {
+      lastFutureMonth = monthKey;
+    }
+
+    let label = "";
+    // Nur beim Monatswechsel in der Zukunft ein Label (z.B. "Jan 27")
+    if (isNewMonth || i === futureSteps) {
+      label = futureDate.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+    }
     
     formattedChartData.push({
       label,
+      rawDate: futureDate.toISOString(),
       Historical: null,
       Bull: Number((assetData.currentPrice + (bullTarget - assetData.currentPrice) * progress).toFixed(2)),
       Base: Number((assetData.currentPrice + (baseTarget - assetData.currentPrice) * progress).toFixed(2)),
@@ -419,7 +457,7 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
           </div>
         </div>
 
-{/* Chart Section */}
+        {/* Chart Section */}
         <div className="bg-white dark:bg-[#161e2e] border border-black/[0.06] dark:border-slate-800 rounded-3xl p-6 shadow-xl shadow-black/[0.02] dark:shadow-none">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
             <h3 className="text-sm font-semibold uppercase tracking-wider text-[#86868b] dark:text-slate-400">Asset Scenario Corridor ({timeframe}M Symmetrical)</h3>
@@ -431,7 +469,6 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
             </div>
           </div>
 
-          {/* Mobiler Scroll-Wrapper: Erzwingt saubere Darstellung auf dem iPhone */}
           <div className="w-full overflow-x-auto pb-2">
             <div className="h-[380px] min-w-[550px] w-full">
               <ResponsiveContainer width="100%" height="100%">

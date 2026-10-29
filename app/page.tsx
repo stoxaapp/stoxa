@@ -419,11 +419,11 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
           </div>
         </div>
 
-        {/* Chart Section */}
+{/* Chart Section */}
         <div className="bg-white dark:bg-[#161e2e] border border-black/[0.06] dark:border-slate-800 rounded-3xl p-6 shadow-xl shadow-black/[0.02] dark:shadow-none">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
             <h3 className="text-sm font-semibold uppercase tracking-wider text-[#86868b] dark:text-slate-400">Asset Scenario Corridor ({timeframe}M Symmetrical)</h3>
-            <div className="flex items-center gap-4 text-xs font-medium">
+            <div className="flex items-center gap-4 text-xs font-medium flex-wrap">
               <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300"><span className="w-2 h-2 rounded-full bg-slate-800 dark:bg-slate-200"></span> History</span>
               <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Bull Case</span>
               <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400"><span className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-400"></span> Base Case</span>
@@ -431,26 +431,29 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
             </div>
           </div>
 
-          <div className="h-[400px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={formattedChartData}>
-                <XAxis dataKey="label" stroke={darkMode ? "#64748b" : "#86868b"} fontSize={11} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                <YAxis stroke={darkMode ? "#64748b" : "#86868b"} fontSize={12} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: darkMode ? '#1e293b' : '#ffffff', 
-                    borderColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', 
-                    borderRadius: '12px', 
-                    color: darkMode ? '#f8fafc' : '#1d1d1f', 
-                    boxShadow: '0 10px 25px rgba(0,0,0,0.2)' 
-                  }}
-                />
-                <Line type="monotone" dataKey="Historical" stroke={darkMode ? "#f8fafc" : "#1d1d1f"} strokeWidth={1.8} dot={false} connectNulls />
-                <Line type="monotone" dataKey="Bull" stroke="#10b981" strokeWidth={1.8} strokeDasharray="4 4" dot={false} connectNulls />
-                <Line type="monotone" dataKey="Base" stroke="#3b82f6" strokeWidth={1.8} strokeDasharray="4 4" dot={false} connectNulls />
-                <Line type="monotone" dataKey="Bear" stroke="#f43f5e" strokeWidth={1.8} strokeDasharray="4 4" dot={false} connectNulls />
-              </LineChart>
-            </ResponsiveContainer>
+          {/* Mobiler Scroll-Wrapper: Erzwingt saubere Darstellung auf dem iPhone */}
+          <div className="w-full overflow-x-auto pb-2">
+            <div className="h-[380px] min-w-[550px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={formattedChartData}>
+                  <XAxis dataKey="label" stroke={darkMode ? "#64748b" : "#86868b"} fontSize={11} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                  <YAxis stroke={darkMode ? "#64748b" : "#86868b"} fontSize={12} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: darkMode ? '#1e293b' : '#ffffff', 
+                      borderColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', 
+                      borderRadius: '12px', 
+                      color: darkMode ? '#f8fafc' : '#1d1d1f', 
+                      boxShadow: '0 10px 25px rgba(0,0,0,0.2)' 
+                    }}
+                  />
+                  <Line type="monotone" dataKey="Historical" stroke={darkMode ? "#f8fafc" : "#1d1d1f"} strokeWidth={1.8} dot={false} connectNulls />
+                  <Line type="monotone" dataKey="Bull" stroke="#10b981" strokeWidth={1.8} strokeDasharray="4 4" dot={false} connectNulls />
+                  <Line type="monotone" dataKey="Base" stroke="#3b82f6" strokeWidth={1.8} strokeDasharray="4 4" dot={false} connectNulls />
+                  <Line type="monotone" dataKey="Bear" stroke="#f43f5e" strokeWidth={1.8} strokeDasharray="4 4" dot={false} connectNulls />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
 

@@ -395,6 +395,7 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
               currentPrice={assetData.currentPrice} 
               bullTarget={bullTarget} 
               bearTarget={bearTarget} 
+              timeframe={timeframe}
             />
 
             <div className="text-right">

@@ -15,18 +15,18 @@ interface AssetDetail {
   history: { date: string; price: number }[];
 }
 
-// Intelligente Such-Presets für Namen und Ticker
+// Beliebte Shortcuts für die Schnellsuche
 const SEARCH_DIRECTORY = [
   { symbol: "NVDA", name: "NVIDIA Corp." },
   { symbol: "AAPL", name: "Apple Inc." },
   { symbol: "GOOGL", name: "Alphabet Inc. (Google)" },
   { symbol: "TSLA", name: "Tesla Inc." },
+  { symbol: "WMT", name: "Walmart Inc." },
+  { symbol: "BMW.DE", name: "BMW AG" },
   { symbol: "BTC-USD", name: "Bitcoin USD" },
   { symbol: "MSFT", name: "Microsoft Corp." },
   { symbol: "AMZN", name: "Amazon.com Inc." },
-  { symbol: "META", name: "Meta Platforms" },
-  { symbol: "VOW3.DE", name: "Volkswagen AG" },
-  { symbol: "SIE.DE", name: "Siemens AG" }
+  { symbol: "VOW3.DE", name: "Volkswagen AG" }
 ];
 
 export default function StoxaApp() {
@@ -66,13 +66,16 @@ export default function StoxaApp() {
   const handleSelectAsset = useCallback((tickerSymbol: string) => {
     let clean = tickerSymbol.toUpperCase().trim();
     
-    // Intelligentes Mapping falls jemand z.B. "GOOGLE" eintippt
+    // Intelligentes Mapping für bekannte Namen
     if (clean === "GOOGLE" || clean === "ALPHABET") clean = "GOOGL";
-    if (clean === "BITCOIN") clean = "BTC-USD";
-    if (clean === "APPLE") clean = "AAPL";
-    if (clean === "TESLA") clean = "TSLA";
-    if (clean === "MICROSOFT") clean = "MSFT";
-    if (clean === "NVIDIA") clean = "NVDA";
+    else if (clean === "BITCOIN") clean = "BTC-USD";
+    else if (clean === "APPLE") clean = "AAPL";
+    else if (clean === "TESLA") clean = "TSLA";
+    else if (clean === "MICROSOFT") clean = "MSFT";
+    else if (clean === "NVIDIA") clean = "NVDA";
+    else if (clean === "WALMART") clean = "WMT";
+    else if (clean === "BMW") clean = "BMW.DE";
+    else if (clean === "VOLKSWAGEN") clean = "VOW3.DE";
 
     if (clean) {
       setSelectedTicker(clean);
@@ -92,7 +95,7 @@ export default function StoxaApp() {
       try {
         const res = await fetch(`/api/history?symbol=${encodeURIComponent(selectedTicker)}&timeframe=${timeframe}`);
         if (!res.ok) {
-          throw new Error('Asset not found or invalid ticker.');
+          throw new Error(`Asset '${selectedTicker}' not found. Please check ticker symbol (e.g. WMT, BMW.DE).`);
         }
         const data = await res.json();
         
@@ -211,9 +214,9 @@ export default function StoxaApp() {
         <div className="bg-white border border-black/[0.06] rounded-3xl p-6 shadow-xl shadow-black/[0.02] relative">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
             
-            {/* Smart Search Input with Autocomplete Dropdown */}
+            {/* Universal Search Input */}
             <div className="relative">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[#86868b] mb-2">Search Asset (Name or Ticker)</label>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#86868b] mb-2">Search Any Global Asset (Ticker + Enter)</label>
               <div className="relative">
                 <Search className="absolute left-4 top-3.5 w-5 h-5 text-slate-400" />
                 <input 
@@ -226,11 +229,11 @@ export default function StoxaApp() {
                     }
                   }}
                   className="w-full bg-[#f5f5f7] border border-black/10 rounded-2xl pl-12 pr-4 py-3 text-lg font-medium text-[#1d1d1f] placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-all"
-                  placeholder="e.g. Google, AAPL, Tesla, BTC..."
+                  placeholder="e.g. WMT, BMW.DE, AAPL, MSFT..."
                 />
               </div>
 
-              {/* Autocomplete Suggestions Dropdown */}
+              {/* Autocomplete Suggestions */}
               {suggestions.length > 0 && (
                 <div className="absolute left-0 right-0 mt-2 bg-white border border-black/[0.08] rounded-2xl shadow-2xl z-50 overflow-hidden">
                   {suggestions.map((item) => (
@@ -249,7 +252,7 @@ export default function StoxaApp() {
               {errorMsg && <p className="text-xs text-rose-500 mt-1.5">{errorMsg}</p>}
 
               <div className="flex gap-2 mt-2.5 flex-wrap">
-                {["NVDA", "AAPL", "GOOGL", "TSLA", "BTC-USD", "MSFT"].map((t) => (
+                {["NVDA", "AAPL", "WMT", "BMW.DE", "TSLA", "BTC-USD"].map((t) => (
                   <button 
                     key={t}
                     onClick={() => handleSelectAsset(t)}
@@ -419,8 +422,8 @@ export default function StoxaApp() {
                 <p>Stoxa computes real annualized volatility ($\sigma$) and CAGR trend metrics dynamically from each asset's past trading history to project realistic upper (Bull) and lower (Bear) boundaries.</p>
               </div>
               <div>
-                <h4 className="font-semibold text-slate-900 mb-1">3. Universal Search</h4>
-                <p>You can search for any stock, crypto asset, or index ticker globally using Yahoo Finance data feeds.</p>
+                <h4 className="font-semibold text-slate-900 mb-1">3. Universal Global Search</h4>
+                <p>You can search for any stock, crypto asset, or international ticker symbol (e.g. WMT for Walmart, BMW.DE for BMW) directly via Enter.</p>
               </div>
             </div>
 

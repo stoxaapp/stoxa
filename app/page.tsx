@@ -359,18 +359,22 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
           </div>
         </div>
 
-        {/* DYNAMISCHE SEO & USER TEXT-ZUSAMMENFASSUNG */}
-        <div className="bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-900/40 rounded-2xl p-4.5 text-xs text-slate-700 dark:text-slate-300 leading-relaxed shadow-sm flex items-start gap-3">
-          <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-          <div>
-            <span className="font-semibold text-[#1d1d1f] dark:text-white mr-1.5">
-              Scenario Analysis for {assetData.name} ({assetData.symbol}):
-            </span>
-            Based on an annualized historical volatility of {(assetData.vol * 100).toFixed(1)}% and a CAGR trend of {(assetData.trend * 100).toFixed(1)}%, 
-            Stoxa projects a Base target of <strong className="text-blue-600 dark:text-blue-400">${baseTarget.toFixed(2)}</strong> ({basePct >= 0 ? '+' : ''}{basePct.toFixed(1)}%) 
-            over the next {timeframe} months. In a high-momentum Bull scenario, prices could stretch to <strong className="text-emerald-600 dark:text-emerald-400">${bullTarget.toFixed(2)}</strong> (+{bullPct.toFixed(1)}%), 
-            while stress testing indicates a Bear downside target of <strong className="text-rose-600 dark:text-rose-400">${bearTarget.toFixed(2)}</strong> ({bearPct.toFixed(1)}%).
+        {/* DYNAMISCHE KACHEL FOR TEXT & SEO */}
+        <div className="bg-white dark:bg-[#161e2e] border border-black/[0.06] dark:border-slate-800 rounded-3xl p-6 shadow-xl shadow-black/[0.02] dark:shadow-none">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-600 dark:text-blue-400">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+              Scenario Intelligence Briefing
+            </h3>
           </div>
+          
+          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            <strong className="text-[#1d1d1f] dark:text-white font-semibold">{assetData.name} ({assetData.symbol})</strong> shows an annualized historical volatility of <span className="font-semibold text-slate-800 dark:text-slate-200">{(assetData.vol * 100).toFixed(1)}%</span> and a CAGR trend metric of <span className="font-semibold text-slate-800 dark:text-slate-200">{(assetData.trend * 100).toFixed(1)}%</span>. 
+            Over the selected <span className="font-semibold text-slate-800 dark:text-slate-200">{timeframe}-month horizon</span>, Stoxa models a Base projection target of <strong className="text-blue-600 dark:text-blue-400">${baseTarget.toFixed(2)}</strong> ({basePct >= 0 ? '+' : ''}{basePct.toFixed(1)}%). 
+            Under high-momentum Bull scenarios, upper target bounds reach <strong className="text-emerald-600 dark:text-emerald-400">${bullTarget.toFixed(2)}</strong> (+{bullPct.toFixed(1)}%), while Bear stress testing indicates a lower support level around <strong className="text-rose-600 dark:text-rose-400">${bearTarget.toFixed(2)}</strong> ({bearPct.toFixed(1)}%).
+          </p>
         </div>
 
         {/* 3 SCENARIO CARDS */}

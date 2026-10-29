@@ -25,10 +25,7 @@ export default function StoxaApp() {
   const [showImpressum, setShowImpressum] = useState(false);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   
-  // Theme State (Dark / Light)
   const [darkMode, setDarkMode] = useState(false);
-
-  // Live Search States
   const [suggestions, setSuggestions] = useState<{ symbol: string; name: string; exchange: string }[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
@@ -42,7 +39,6 @@ export default function StoxaApp() {
     history: []
   });
 
-  // Dark Mode Auto-Detection & Toggle Sync with HTML Class
   useEffect(() => {
     const savedTheme = localStorage.getItem('stoxa-theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -69,7 +65,6 @@ export default function StoxaApp() {
     }
   };
 
-  // LIVE SEARCH DEBOUNCE EFFECT (Abfrage der Yahoo Live API)
   useEffect(() => {
     if (query.trim().length < 2) {
       setSuggestions([]);
@@ -102,7 +97,6 @@ export default function StoxaApp() {
     }
   }, []);
 
-  // API Fetch für historische Marktdaten
   useEffect(() => {
     let isMounted = true;
 
@@ -132,7 +126,6 @@ export default function StoxaApp() {
     return () => { isMounted = false; };
   }, [selectedTicker, timeframe]);
 
-  // Scenario Calculations
   const timeFactor = timeframe / 12.0;
 
   const bullTarget = assetData.currentPrice * (1 + (Math.max(assetData.trend, 0.08) * timeFactor) + (assetData.vol * 0.5 * Math.sqrt(timeFactor)));
@@ -143,7 +136,6 @@ export default function StoxaApp() {
   const basePct = ((baseTarget - assetData.currentPrice) / assetData.currentPrice) * 100;
   const bearPct = ((bearTarget - assetData.currentPrice) / assetData.currentPrice) * 100;
 
-  // 50/50 Symmetrical Chart Construction
   const historyPoints = assetData.history || [];
 
   const formattedChartData: any[] = historyPoints.map(h => ({
@@ -185,8 +177,8 @@ export default function StoxaApp() {
       {/* Header */}
       <header className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between border-b border-black/[0.06] dark:border-white/10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-600/25">
-            <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-600/25 text-white">
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M4 18L9 13L13 16L20 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
               <path d="M16 8H20V12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
               <path d="M4 13L9 8L13 11L20 3" stroke="currentColor" strokeWidth="1.5" strokeDasharray="2 2" strokeOpacity="0.6"/>
@@ -200,7 +192,6 @@ export default function StoxaApp() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Dark Mode Toggle Button */}
           <button
             onClick={toggleDarkMode}
             className="p-2 rounded-full bg-white dark:bg-slate-800 border border-black/[0.08] dark:border-slate-700 text-[#1d1d1f] dark:text-slate-200 hover:border-black/30 dark:hover:border-slate-500 shadow-sm transition-all"
@@ -240,7 +231,6 @@ export default function StoxaApp() {
         <div className="bg-white dark:bg-[#161e2e] border border-black/[0.06] dark:border-slate-800 rounded-3xl p-6 shadow-xl shadow-black/[0.02] dark:shadow-none relative">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
             
-            {/* Live Search Input */}
             <div className="relative">
               <label className="block text-xs font-semibold uppercase tracking-wider text-[#86868b] dark:text-slate-400 mb-2">Search Any Global Asset</label>
               <div className="relative">
@@ -264,7 +254,6 @@ export default function StoxaApp() {
                 )}
               </div>
 
-              {/* Autocomplete Dropdown */}
               {suggestions.length > 0 && (
                 <div className="absolute left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-black/[0.08] dark:border-slate-700 rounded-2xl shadow-2xl z-50 overflow-hidden">
                   {suggestions.map((item) => (
@@ -298,7 +287,6 @@ export default function StoxaApp() {
               </div>
             </div>
 
-            {/* Horizon Slider */}
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label className="text-xs font-semibold uppercase tracking-wider text-[#86868b] dark:text-slate-400">Symmetrical Horizon</label>

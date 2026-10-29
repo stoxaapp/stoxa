@@ -1,11 +1,11 @@
 import { Metadata } from 'next';
-import StoxaApp from '@/app/page';
+import StoxaApp from '../../page';
 
 interface Props {
   params: { symbol: string };
 }
 
-// 1. Dynamische Meta-Daten für Google & Social Media
+// Dynamische SEO Meta-Daten für Google & Social Media
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const symbol = params.symbol.toUpperCase();
   
@@ -36,7 +36,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-// 2. Rendern der Hauptkomponente mit dem jeweiligen Ticker
 export default function AssetPage({ params }: Props) {
   return <StoxaApp initialTicker={params.symbol.toUpperCase()} />;
 }

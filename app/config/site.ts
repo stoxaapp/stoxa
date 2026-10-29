@@ -3,11 +3,11 @@ export const SITE_CONFIG = {
   domain: "stoxa.co",
   
   owner: {
-    name: "Firstname Lastname",
-    street: "Sample Street 12",
-    city: "10115 Berlin",
+    name: "Matthias Henkel",
+    street: "Reinhard-Klose-Weg 14",
+    city: "48163 Münster",
     country: "Germany",
-    email: "contact@stoxa.co",
+    email: "StoxaApp@gmail.com",
   },
 
   disclaimer: "The financial simulations, calculations, and data provided on Stoxa.co are for educational and informational purposes only and do not constitute financial advice, investment recommendations, or an endorsement.",

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Activity, ArrowUpRight, ArrowDownRight, Search, Loader2, X, ShieldCheck, HelpCircle, Sun, Moon, Newspaper, ExternalLink } from 'lucide-react';
+import { TrendingUp, Activity, ArrowUpRight, ArrowDownRight, Search, Loader2, X, ShieldCheck, HelpCircle, Sun, Moon, Newspaper, ExternalLink, Sparkles } from 'lucide-react';
 import { SITE_CONFIG } from './config/site';
 
 interface AssetDetail {
@@ -356,6 +356,20 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
             <div className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center justify-end gap-1">
               <Activity className="w-3.5 h-3.5" /> Live Benchmark Active
             </div>
+          </div>
+        </div>
+
+        {/* DYNAMISCHE SEO & USER TEXT-ZUSAMMENFASSUNG */}
+        <div className="bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-900/40 rounded-2xl p-4.5 text-xs text-slate-700 dark:text-slate-300 leading-relaxed shadow-sm flex items-start gap-3">
+          <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-semibold text-[#1d1d1f] dark:text-white mr-1.5">
+              Scenario Analysis for {assetData.name} ({assetData.symbol}):
+            </span>
+            Based on an annualized historical volatility of {(assetData.vol * 100).toFixed(1)}% and a CAGR trend of {(assetData.trend * 100).toFixed(1)}%, 
+            Stoxa projects a Base target of <strong className="text-blue-600 dark:text-blue-400">${baseTarget.toFixed(2)}</strong> ({basePct >= 0 ? '+' : ''}{basePct.toFixed(1)}%) 
+            over the next {timeframe} months. In a high-momentum Bull scenario, prices could stretch to <strong className="text-emerald-600 dark:text-emerald-400">${bullTarget.toFixed(2)}</strong> (+{bullPct.toFixed(1)}%), 
+            while stress testing indicates a Bear downside target of <strong className="text-rose-600 dark:text-rose-400">${bearTarget.toFixed(2)}</strong> ({bearPct.toFixed(1)}%).
           </div>
         </div>
 

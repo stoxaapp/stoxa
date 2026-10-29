@@ -350,4 +350,50 @@ export default function StoxaApp() {
               </button>
             </div>
 
-            <div className="space-y-4 text-xs text-[#1d1d1f] leading-relaxed max-h-[60vh] overflow-y
+            <div className="space-y-4 text-xs text-[#1d1d1f] leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
+              <div>
+                <h4 className="font-semibold text-slate-900 mb-1">Angaben gemäß § 5 DDG (Telemediengesetz)</h4>
+                <p className="text-slate-600">
+                  Stoxa Intelligence Co.<br />
+                  Musterstraße 42<br />
+                  10115 Berlin, Deutschland
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-slate-900 mb-1">Vertreten durch</h4>
+                <p className="text-slate-600">Geschäftsführung / Gründer-Team</p>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-slate-900 mb-1">Kontakt</h4>
+                <p className="text-slate-600">
+                  E-Mail: <a href="mailto:contact@stoxa.co" className="text-blue-600 hover:underline">contact@stoxa.co</a><br />
+                  Website: <a href="https://stoxa.co" className="text-blue-600 hover:underline">www.stoxa.co</a>
+                </p>
+              </div>
+
+              <div className="pt-2 border-t border-black/5">
+                <h4 className="font-semibold text-slate-900 mb-1">Haftungsausschluss (Disclaimer)</h4>
+                <p className="text-[#86868b] leading-normal">
+                  Die auf Stoxa.co bereitgestellten Finanzsimulationen, Berechnungen und Daten dienen ausschließlich Informations- und Bildungszwecken. Sie stellen keinerlei Anlageberatung, Kauf- oder Verkaufsempfehlung für Finanzinstrumente dar.
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <button 
+                onClick={() => setShowImpressum(false)}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-xl text-xs transition-colors shadow-md shadow-blue-600/20"
+              >
+                Verstanden & Schließen
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}

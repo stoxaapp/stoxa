@@ -167,31 +167,21 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
 
   const historyPoints = assetData.history || [];
 
-  // Sauberer Monatsfilter für die X-Achse: Zeige nur ein Label pro Monat
-  let lastSeenMonth = "";
-  const formattedChartData: any[] = historyPoints.map((h, idx) => {
+  // Robuste X-Achsen Aufbereitung: Zeigt saubere Monatslabels beim Monatswechsel
+  let lastMonth = "";
+  const formattedChartData: any[] = historyPoints.map((h) => {
     const d = new Date(h.date);
-    const monthKey = !isNaN(d.getTime()) 
-      ? `${d.getFullYear()}-${d.getMonth()}` 
-      : h.date.substring(0, 6); // Fallback
+    const monthStr = !isNaN(d.getTime()) 
+      ? d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }) 
+      : h.date;
 
-    const isFirstOfदेख = monthKey !== lastSeenMonth;
-    if (isFirstOfदेख) {
-      lastSeenMonth = monthKey;
-    }
-
-    // Nur beim Monatswechsel ein Label anzeigen, sonst leer lassen
-    let label = "";
-    if (isFirstOfदेख || idx === 0 || idx === historyPoints.length - 1) {
-      if (!isNaN(d.getTime())) {
-        label = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }); // z.B. "Jan 26"
-      } else {
-        label = h.date;
-      }
+    const showLabel = monthStr !== lastMonth;
+    if (showLabel) {
+      lastMonth = monthStr;
     }
 
     return {
-      label,
+      label: showLabel ? monthStr : "",
       rawDate: h.date,
       Historical: h.price,
       Bull: null,
@@ -209,27 +199,20 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
 
   const futureSteps = Math.max(historyPoints.length, 12);
   const currentDate = new Date();
-  let lastFutureMonth = "";
 
   for (let i = 1; i <= futureSteps; i++) {
     const progress = i / futureSteps;
     const daysAhead = Math.round(progress * (timeframe * 30));
     const futureDate = new Date(currentDate.getTime() + daysAhead * 24 * 60 * 60 * 1000);
     
-    const monthKey = `${futureDate.getFullYear()}-${futureDate.getMonth()}`;
-    const isNewMonth = monthKey !== lastFutureMonth;
-    if (isNewMonth) {
-      lastFutureMonth = monthKey;
-    }
-
-    let label = "";
-    // Nur beim Monatswechsel in der Zukunft ein Label (z.B. "Jan 27")
-    if (isNewMonth || i === futureSteps) {
-      label = futureDate.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+    const monthStr = futureDate.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+    const showLabel = monthStr !== lastMonth;
+    if (showLabel) {
+      lastMonth = monthStr;
     }
     
     formattedChartData.push({
-      label,
+      label: showLabel ? monthStr : "",
       rawDate: futureDate.toISOString(),
       Historical: null,
       Bull: Number((assetData.currentPrice + (bullTarget - assetData.currentPrice) * progress).toFixed(2)),

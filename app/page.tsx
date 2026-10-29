@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Activity, ArrowUpRight, ArrowDownRight, Search, Loader2, X, ShieldCheck } from 'lucide-react';
+import { TrendingUp, Activity, ArrowUpRight, ArrowDownRight, Search, Loader2, X, ShieldCheck, HelpCircle } from 'lucide-react';
 import { SITE_CONFIG } from './config/site';
 
 interface AssetDetail {
@@ -23,6 +23,7 @@ export default function StoxaApp() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [showImpressum, setShowImpressum] = useState(false);
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
 
   const [assetData, setAssetData] = useState<AssetDetail>({
     symbol: "NVDA",
@@ -43,7 +44,7 @@ export default function StoxaApp() {
     }
   }, []);
 
-  // API Abfrage
+  // API Fetch
   useEffect(() => {
     let isMounted = true;
 
@@ -53,7 +54,7 @@ export default function StoxaApp() {
       try {
         const res = await fetch(`/api/history?symbol=${encodeURIComponent(selectedTicker)}&timeframe=${timeframe}`);
         if (!res.ok) {
-          throw new Error('Asset nicht gefunden.');
+          throw new Error('Asset not found.');
         }
         const data = await res.json();
         
@@ -62,7 +63,7 @@ export default function StoxaApp() {
         }
       } catch (err: any) {
         if (isMounted) {
-          setErrorMsg(err.message || 'Fehler beim Laden.');
+          setErrorMsg(err.message || 'Failed to load data.');
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -73,7 +74,7 @@ export default function StoxaApp() {
     return () => { isMounted = false; };
   }, [selectedTicker, timeframe]);
 
-  // Szenario-Berechnung
+  // Scenario Calculations
   const timeFactor = timeframe / 12.0;
 
   const bullTarget = assetData.currentPrice * (1 + (Math.max(assetData.trend, 0.08) * timeFactor) + (assetData.vol * 0.5 * Math.sqrt(timeFactor)));
@@ -84,7 +85,7 @@ export default function StoxaApp() {
   const basePct = ((baseTarget - assetData.currentPrice) / assetData.currentPrice) * 100;
   const bearPct = ((bearTarget - assetData.currentPrice) / assetData.currentPrice) * 100;
 
-  // 50/50 Symmetrischer Chart-Aufbau
+  // 50/50 Symmetrical Chart Construction
   const historyPoints = assetData.history || [];
 
   const formattedChartData: any[] = historyPoints.map(h => ({
@@ -109,7 +110,7 @@ export default function StoxaApp() {
     const progress = i / futureSteps;
     const daysAhead = Math.round(progress * (timeframe * 30));
     const futureDate = new Date(currentDate.getTime() + daysAhead * 24 * 60 * 60 * 1000);
-    const label = futureDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
+    const label = futureDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
     
     formattedChartData.push({
       label,
@@ -140,18 +141,28 @@ export default function StoxaApp() {
           </div>
         </div>
 
-        <div className="text-xs font-medium px-3.5 py-1.5 rounded-full bg-white border border-black/[0.08] text-[#1d1d1f] shadow-sm flex items-center gap-2">
-          {loading ? (
-            <>
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
-              <span>Lade Börsendaten...</span>
-            </>
-          ) : (
-            <>
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span>Financial Engine Active</span>
-            </>
-          )}
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setShowHowItWorks(true)}
+            className="text-xs font-medium px-3 py-1.5 rounded-full bg-white border border-black/[0.08] text-[#1d1d1f] hover:border-black/30 shadow-sm flex items-center gap-1.5 transition-all"
+          >
+            <HelpCircle className="w-3.5 h-3.5 text-blue-600" />
+            <span>How it works</span>
+          </button>
+
+          <div className="text-xs font-medium px-3.5 py-1.5 rounded-full bg-white border border-black/[0.08] text-[#1d1d1f] shadow-sm hidden sm:flex items-center gap-2">
+            {loading ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
+                <span>Loading Market Feed...</span>
+              </>
+            ) : (
+              <>
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span>Engine Active</span>
+              </>
+            )}
+          </div>
         </div>
       </header>
 
@@ -164,7 +175,7 @@ export default function StoxaApp() {
             
             {/* Search Input */}
             <div className="relative">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[#86868b] mb-2">Asset Suchen (Ticker + Enter)</label>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#86868b] mb-2">Search Asset (Ticker + Enter)</label>
               <div className="relative">
                 <Search className="absolute left-4 top-3.5 w-5 h-5 text-slate-400" />
                 <input 
@@ -177,7 +188,7 @@ export default function StoxaApp() {
                     }
                   }}
                   className="w-full bg-[#f5f5f7] border border-black/10 rounded-2xl pl-12 pr-4 py-3 text-lg font-medium text-[#1d1d1f] placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-all"
-                  placeholder="z.B. AAPL, TSLA, BTC-USD, VOW3.DE..."
+                  placeholder="e.g. AAPL, TSLA, BTC-USD, VOW3.DE..."
                 />
               </div>
               {errorMsg && <p className="text-xs text-rose-500 mt-1.5">{errorMsg}</p>}
@@ -198,8 +209,8 @@ export default function StoxaApp() {
             {/* Horizon Slider */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-[#86868b]">Symmetrischer Horizont</label>
-                <span className="text-sm font-bold text-blue-600">{timeframe} Monate ({(timeframe/12).toFixed(1)} Jahre)</span>
+                <label className="text-xs font-semibold uppercase tracking-wider text-[#86868b]">Symmetrical Horizon</label>
+                <span className="text-sm font-bold text-blue-600">{timeframe} Months ({(timeframe/12).toFixed(1)} Years)</span>
               </div>
               <input 
                 type="range" 
@@ -210,9 +221,9 @@ export default function StoxaApp() {
                 className="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
               />
               <div className="flex justify-between text-[11px] text-[#86868b] mt-2">
-                <span>3 Monate</span>
-                <span>12 Monate (1 J.)</span>
-                <span>24 Monate (2 J.)</span>
+                <span>3 Months</span>
+                <span>12 Months (1 Y.)</span>
+                <span>24 Months (2 Y.)</span>
               </div>
             </div>
 
@@ -224,7 +235,7 @@ export default function StoxaApp() {
           <div>
             <h2 className="text-xl font-bold text-[#1d1d1f]">{assetData.name} <span className="text-[#86868b] font-normal text-base">({assetData.symbol})</span></h2>
             <p className="text-xs text-[#86868b]">
-              Echte Hist. Volatilität: <span className="font-semibold text-slate-700">{(assetData.vol * 100).toFixed(1)}%</span> | 
+              Hist. Volatility: <span className="font-semibold text-slate-700">{(assetData.vol * 100).toFixed(1)}%</span> | 
               CAGR Trend: <span className="font-semibold text-slate-700">{(assetData.trend * 100).toFixed(1)}%</span> | 
               Max Drawdown: <span className="font-semibold text-slate-700">{(assetData.maxDD * 100).toFixed(1)}%</span>
             </p>
@@ -284,109 +295,7 @@ export default function StoxaApp() {
         {/* Chart Section */}
         <div className="bg-white border border-black/[0.06] rounded-3xl p-6 shadow-xl shadow-black/[0.02]">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-[#86868b]">Asset-Spezifischer Szenario-Korridor ({timeframe}M)</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-[#86868b]">Asset Scenario Corridor ({timeframe}M Symmetrical)</h3>
             <div className="flex items-center gap-4 text-xs font-medium">
-              <span className="flex items-center gap-1.5 text-slate-700"><span className="w-2 h-2 rounded-full bg-slate-800"></span> Tageshistorie</span>
+              <span className="flex items-center gap-1.5 text-slate-700"><span className="w-2 h-2 rounded-full bg-slate-800"></span> History</span>
               <span className="flex items-center gap-1.5 text-emerald-600"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Bull Case</span>
-              <span className="flex items-center gap-1.5 text-blue-600"><span className="w-2 h-2 rounded-full bg-blue-600"></span> Base Case</span>
-              <span className="flex items-center gap-1.5 text-rose-600"><span className="w-2 h-2 rounded-full bg-rose-500"></span> Bear Case</span>
-            </div>
-          </div>
-
-          <div className="h-[400px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={formattedChartData}>
-                <XAxis dataKey="label" stroke="#86868b" fontSize={11} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                <YAxis stroke="#86868b" fontSize={12} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#ffffff', borderColor: 'rgba(0,0,0,0.1)', borderRadius: '12px', color: '#1d1d1f', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
-                />
-                <Line type="monotone" dataKey="Historical" stroke="#1d1d1f" strokeWidth={1.8} dot={false} connectNulls />
-                <Line type="monotone" dataKey="Bull" stroke="#10b981" strokeWidth={1.8} strokeDasharray="4 4" dot={false} connectNulls />
-                <Line type="monotone" dataKey="Base" stroke="#2563eb" strokeWidth={1.8} strokeDasharray="4 4" dot={false} connectNulls />
-                <Line type="monotone" dataKey="Bear" stroke="#f43f5e" strokeWidth={1.8} strokeDasharray="4 4" dot={false} connectNulls />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <footer className="pt-6 pb-8 border-t border-black/[0.06] flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#86868b]">
-          <div>
-            {SITE_CONFIG.name} is a predictive financial simulation engine for educational & research purposes.
-          </div>
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={() => setShowImpressum(true)} 
-              className="hover:text-blue-600 font-medium transition-colors underline underline-offset-4"
-            >
-              Impressum & Rechtliches
-            </button>
-            <span>•</span>
-            <span>© {new Date().getFullYear()} {SITE_CONFIG.domain}</span>
-          </div>
-        </footer>
-
-      </main>
-
-      {/* IMPRESSUM MODAL */}
-      {showImpressum && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-black/10 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5">
-            
-            <div className="flex items-center justify-between border-b border-black/5 pb-4">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-blue-600" />
-                <h3 className="font-semibold text-lg text-[#1d1d1f]">Impressum & Anbieterkennzeichnung</h3>
-              </div>
-              <button 
-                onClick={() => setShowImpressum(false)}
-                className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4 text-xs text-[#1d1d1f] leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
-              <div>
-                <h4 className="font-semibold text-slate-900 mb-1">Angaben gemäß § 5 DDG</h4>
-                <p className="text-slate-600">
-                  {SITE_CONFIG.owner.name}<br />
-                  {SITE_CONFIG.owner.street}<br />
-                  {SITE_CONFIG.owner.city}<br />
-                  {SITE_CONFIG.owner.country}
-                </p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-slate-900 mb-1">Kontakt</h4>
-                <p className="text-slate-600">
-                  E-Mail: <a href={`mailto:${SITE_CONFIG.owner.email}`} className="text-blue-600 hover:underline">{SITE_CONFIG.owner.email}</a><br />
-                  Website: <a href={`https://${SITE_CONFIG.domain}`} className="text-blue-600 hover:underline">www.{SITE_CONFIG.domain}</a>
-                </p>
-              </div>
-
-              <div className="pt-2 border-t border-black/5">
-                <h4 className="font-semibold text-slate-900 mb-1">Haftungsausschluss (Disclaimer)</h4>
-                <p className="text-[#86868b] leading-normal">
-                  {SITE_CONFIG.disclaimer}
-                </p>
-              </div>
-            </div>
-
-            <div className="pt-2">
-              <button 
-                onClick={() => setShowImpressum(false)}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-xl text-xs transition-colors shadow-md shadow-blue-600/20"
-              >
-                Verstanden & Schließen
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
-
-    </div>
-  );
-}

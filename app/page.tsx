@@ -380,66 +380,66 @@ export default function StoxaApp() {
       )}
 
       {/* LEGAL & IMPRINT MODAL */}
-      {showImpressum && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-black/10 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5">
-            
-            <div className="flex items-center justify-between border-b border-black/5 pb-4">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-blue-600" />
-                <h3 className="font-semibold text-lg text-[#1d1d1f]">Legal & Privacy</h3>
-              </div>
-              <button onClick={() => setShowImpressum(false)} className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4 text-xs text-[#1d1d1f] leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
-              <div>
-                <h4 className="font-semibold text-slate-900 mb-1">Provider Identification</h4>
-                <p className="text-slate-600">
-                  {SITE_CONFIG.owner.name}<br />
-                  {SITE_CONFIG.owner.street}<br />
-                  {SITE_CONFIG.owner.city}<br />
-                  {SITE_CONFIG.owner.country}
-                </p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-slate-900 mb-1">Contact</h4>
-                <p className="text-slate-600">
-                  Email: <a href={`mailto:${SITE_CONFIG.owner.email}`} className="text-blue-600 hover:underline">{SITE_CONFIG.owner.email}</a><br />
-                  Website: <a href={`https://${SITE_CONFIG.domain}`} className="text-blue-600 hover:underline">www.{SITE_CONFIG.domain}</a>
-                </p>
-              </div>
-
-              <div className="pt-2 border-t border-black/5">
-                <h4 className="font-semibold text-slate-900 mb-1">Privacy Policy</h4>
-                <p className="text-slate-600 leading-normal">
-                  {SITE_CONFIG.privacyText}
-                </p>
-              </div>
-
-              <div className="pt-2 border-t border-black/5">
-                <h4 className="font-semibold text-slate-900 mb-1">Disclaimer</h4>
-                <p className="text-[#86868b] leading-normal">
-                  {SITE_CONFIG.disclaimer}
-                </p>
-              </div>
-            </div>
-
-            <div className="pt-2">
-              <button 
-                onClick={() => setShowImpressum(false)}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-xl text-xs transition-colors shadow-md shadow-blue-600/20"
-              >
-                Close
-              </button>
-            </div>
-
-          </div>
+{showImpressum && (
+  <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="bg-white border border-black/10 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+      
+      <div className="flex items-center justify-between border-b border-black/5 pb-4">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="w-5 h-5 text-blue-600" />
+          <h3 className="font-semibold text-lg text-[#1d1d1f]">Legal & Privacy</h3>
         </div>
-      )}
+        <button onClick={() => setShowImpressum(false)} className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500">
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+
+      <div className="space-y-4 text-xs text-[#1d1d1f] leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
+        <div>
+          <h4 className="font-semibold text-slate-900 mb-1">Provider Identification</h4>
+          <p className="text-slate-600">
+            {SITE_CONFIG.owner.name}<br />
+            {SITE_CONFIG.owner.street}<br />
+            {SITE_CONFIG.owner.city}<br />
+            {SITE_CONFIG.owner.country}
+          </p>
+        </div>
+
+        <div>
+          <h4 className="font-semibold text-slate-900 mb-1">Contact</h4>
+          <p className="text-slate-600">
+            Email: <a href={`mailto:${SITE_CONFIG.owner.email}`} className="text-blue-600 hover:underline">{SITE_CONFIG.owner.email}</a><br />
+            Website: <a href={`https://${SITE_CONFIG.domain}`} className="text-blue-600 hover:underline">www.{SITE_CONFIG.domain}</a>
+          </p>
+        </div>
+
+        <div className="pt-2 border-t border-black/5">
+          <h4 className="font-semibold text-slate-900 mb-1">Privacy Policy</h4>
+          <p className="text-slate-600 leading-normal">
+            {SITE_CONFIG.privacyText}
+          </p>
+        </div>
+
+        <div className="pt-2 border-t border-black/5">
+          <h4 className="font-semibold text-slate-900 mb-1">Disclaimer</h4>
+          <p className="text-[#86868b] leading-normal">
+            {SITE_CONFIG.disclaimer}
+          </p>
+        </div>
+      </div>
+
+      <div className="pt-2">
+        <button 
+          onClick={() => setShowImpressum(false)}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-xl text-xs transition-colors shadow-md shadow-blue-600/20"
+        >
+          Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
 
     </div>
   );

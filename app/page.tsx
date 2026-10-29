@@ -73,7 +73,6 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
       localStorage.setItem('stoxa-theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
-      localStorage.setItem('stoxa-theme', 'light');
     }
   };
 
@@ -210,6 +209,9 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
       Bear: Number((assetData.currentPrice + (bearTarget - assetData.currentPrice) * progress).toFixed(2)),
     });
   }
+
+  // Zähler für individuelle Monatswechsel-Nummerierung
+  let uniqueMonthCount = 0;
 
   return (
     <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#0b0f17] text-[#1d1d1f] dark:text-slate-100 font-sans selection:bg-blue-500/25 transition-colors duration-200 relative">
@@ -454,9 +456,22 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
                     axisLine={false} 
                     interval={0}
                     tickFormatter={(value, index) => {
-                      if (index === 0) return value;
+                      if (index === 0) {
+                        uniqueMonthCount = 0;
+                        return value;
+                      }
                       const prevValue = formattedChartData[index - 1]?.label;
-                      return value !== prevValue ? value : '';
+                      const isNewMonth = value !== prevValue;
+                      
+                      if (isNewMonth) {
+                        uniqueMonthCount++;
+                        // Dynamische Anpassung: Bei >12 Monaten nur jeden 2. oder 3. Monat beschriften
+                        const step = timeframe > 18 ? 3 : timeframe > 12 ? 2 : 1;
+                        if (uniqueMonthCount % step === 0) {
+                          return value;
+                        }
+                      }
+                      return '';
                     }}
                   />
                   <YAxis stroke={darkMode ? "#64748b" : "#86868b"} fontSize={12} tickLine={false} axisLine={false} domain={['auto', 'auto']} />

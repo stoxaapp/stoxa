@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Activity, ArrowUpRight, ArrowDownRight, Search, Loader2, X, ShieldCheck, HelpCircle, Sun, Moon } from 'lucide-react';
+import { TrendingUp, Activity, ArrowUpRight, ArrowDownRight, Search, Loader2, X, ShieldCheck, HelpCircle, Sun, Moon, Newspaper, ExternalLink } from 'lucide-react';
 import { SITE_CONFIG } from './config/site';
 
 interface AssetDetail {
@@ -13,6 +13,14 @@ interface AssetDetail {
   vol: number;
   maxDD: number;
   history: { date: string; price: number }[];
+}
+
+interface NewsArticle {
+  id: string;
+  title: string;
+  publisher: string;
+  link: string;
+  providerPublishTime: string;
 }
 
 export default function StoxaApp() {
@@ -28,6 +36,10 @@ export default function StoxaApp() {
   const [darkMode, setDarkMode] = useState(false);
   const [suggestions, setSuggestions] = useState<{ symbol: string; name: string; exchange: string }[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+
+  // News State
+  const [news, setNews] = useState<NewsArticle[]>([]);
+  const [loadingNews, setLoadingNews] = useState(false);
 
   const [assetData, setAssetData] = useState<AssetDetail>({
     symbol: "NVDA",
@@ -97,6 +109,7 @@ export default function StoxaApp() {
     }
   }, []);
 
+  // Fetch Asset Data & News
   useEffect(() => {
     let isMounted = true;
 
@@ -122,7 +135,23 @@ export default function StoxaApp() {
       }
     }
 
+    async function fetchNews() {
+      setLoadingNews(true);
+      try {
+        const res = await fetch(`/api/news?symbol=${encodeURIComponent(selectedTicker)}`);
+        const data = await res.json();
+        if (isMounted) {
+          setNews(data.news || []);
+        }
+      } catch (err) {
+        if (isMounted) setNews([]);
+      } finally {
+        if (isMounted) setLoadingNews(false);
+      }
+    }
+
     fetchData();
+    fetchNews();
     return () => { isMounted = false; };
   }, [selectedTicker, timeframe]);
 
@@ -405,6 +434,41 @@ export default function StoxaApp() {
               </LineChart>
             </ResponsiveContainer>
           </div>
+        </div>
+
+        {/* NEWS FEED SECTION */}
+        <div className="bg-white dark:bg-[#161e2e] border border-black/[0.06] dark:border-slate-800 rounded-3xl p-6 shadow-xl shadow-black/[0.02] dark:shadow-none">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Newspaper className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-[#86868b] dark:text-slate-400">Latest Headlines for {assetData.symbol}</h3>
+            </div>
+            {loadingNews && <Loader2 className="w-4 h-4 animate-spin text-blue-600 dark:text-blue-400" />}
+          </div>
+
+          {news.length === 0 && !loadingNews ? (
+            <p className="text-xs text-[#86868b] dark:text-slate-400 py-4">No recent news found for this asset.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {news.map((item) => (
+                <a
+                  key={item.id}
+                  href={item.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group p-4 rounded-2xl bg-[#f5f5f7] dark:bg-slate-900 border border-black/[0.04] dark:border-slate-800 hover:border-blue-500/40 dark:hover:border-blue-500/40 transition-all flex flex-col justify-between gap-3"
+                >
+                  <h4 className="text-xs font-semibold text-[#1d1d1f] dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
+                    {item.title}
+                  </h4>
+                  <div className="flex items-center justify-between text-[10px] text-[#86868b] dark:text-slate-400">
+                    <span>{item.publisher} • {item.providerPublishTime}</span>
+                    <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-blue-600 dark:text-blue-400" />
+                  </div>
+                </a>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Footer */}

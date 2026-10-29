@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, Activity, ArrowUpRight, ArrowDownRight, Search, Loader2, X, ShieldCheck } from 'lucide-react';
+import { SITE_CONFIG } from './config/site';
 
 interface AssetDetail {
   symbol: string;
@@ -21,7 +22,7 @@ export default function StoxaApp() {
   
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  const [showImpressum, setShowImpressum] = useState(false); // Modal State for Impressum
+  const [showImpressum, setShowImpressum] = useState(false);
 
   const [assetData, setAssetData] = useState<AssetDetail>({
     symbol: "NVDA",
@@ -42,7 +43,7 @@ export default function StoxaApp() {
     }
   }, []);
 
-  // API Abfrage mit dynamischem timeframe
+  // API Abfrage
   useEffect(() => {
     let isMounted = true;
 
@@ -72,7 +73,7 @@ export default function StoxaApp() {
     return () => { isMounted = false; };
   }, [selectedTicker, timeframe]);
 
-  // Dynamische Szenario-Berechnung
+  // Szenario-Berechnung
   const timeFactor = timeframe / 12.0;
 
   const bullTarget = assetData.currentPrice * (1 + (Math.max(assetData.trend, 0.08) * timeFactor) + (assetData.vol * 0.5 * Math.sqrt(timeFactor)));
@@ -122,11 +123,9 @@ export default function StoxaApp() {
   return (
     <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] font-sans selection:bg-blue-500/25 relative">
       
-      {/* Header mit neuem SVG-Logo */}
+      {/* Header */}
       <header className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between border-b border-black/[0.06]">
         <div className="flex items-center gap-3">
-          
-          {/* Custom SVG Logo */}
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-600/25">
             <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M4 18L9 13L13 16L20 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -242,7 +241,6 @@ export default function StoxaApp() {
 
         {/* 3 SCENARIO CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
           <div className="bg-white border border-black/[0.06] hover:border-emerald-500/50 rounded-2xl p-5 shadow-sm transition-all">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold uppercase tracking-wider text-emerald-600">Bull Scenario</span>
@@ -281,7 +279,6 @@ export default function StoxaApp() {
               {bearPct.toFixed(1)}% Stress Drawdown
             </div>
           </div>
-
         </div>
 
         {/* Chart Section */}
@@ -313,10 +310,10 @@ export default function StoxaApp() {
           </div>
         </div>
 
-        {/* Footer mit Impressum-Link */}
+        {/* Footer */}
         <footer className="pt-6 pb-8 border-t border-black/[0.06] flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#86868b]">
           <div>
-            Stoxa.co is a predictive financial simulation engine for educational & research purposes.
+            {SITE_CONFIG.name} is a predictive financial simulation engine for educational & research purposes.
           </div>
           <div className="flex items-center gap-4">
             <button 
@@ -326,16 +323,16 @@ export default function StoxaApp() {
               Impressum & Rechtliches
             </button>
             <span>•</span>
-            <span>© {new Date().getFullYear()} Stoxa Inc.</span>
+            <span>© {new Date().getFullYear()} {SITE_CONFIG.domain}</span>
           </div>
         </footer>
 
       </main>
 
-      {/* IMPRESSUM MODAL POPUP */}
+      {/* IMPRESSUM MODAL */}
       {showImpressum && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-black/10 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in duration-150">
+          <div className="bg-white border border-black/10 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5">
             
             <div className="flex items-center justify-between border-b border-black/5 pb-4">
               <div className="flex items-center gap-2">
@@ -352,31 +349,27 @@ export default function StoxaApp() {
 
             <div className="space-y-4 text-xs text-[#1d1d1f] leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
               <div>
-                <h4 className="font-semibold text-slate-900 mb-1">Angaben gemäß § 5 DDG (Telemediengesetz)</h4>
+                <h4 className="font-semibold text-slate-900 mb-1">Angaben gemäß § 5 DDG</h4>
                 <p className="text-slate-600">
-                  Stoxa Intelligence Co.<br />
-                  Musterstraße 42<br />
-                  10115 Berlin, Deutschland
+                  {SITE_CONFIG.owner.name}<br />
+                  {SITE_CONFIG.owner.street}<br />
+                  {SITE_CONFIG.owner.city}<br />
+                  {SITE_CONFIG.owner.country}
                 </p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-slate-900 mb-1">Vertreten durch</h4>
-                <p className="text-slate-600">Geschäftsführung / Gründer-Team</p>
               </div>
 
               <div>
                 <h4 className="font-semibold text-slate-900 mb-1">Kontakt</h4>
                 <p className="text-slate-600">
-                  E-Mail: <a href="mailto:contact@stoxa.co" className="text-blue-600 hover:underline">contact@stoxa.co</a><br />
-                  Website: <a href="https://stoxa.co" className="text-blue-600 hover:underline">www.stoxa.co</a>
+                  E-Mail: <a href={`mailto:${SITE_CONFIG.owner.email}`} className="text-blue-600 hover:underline">{SITE_CONFIG.owner.email}</a><br />
+                  Website: <a href={`https://${SITE_CONFIG.domain}`} className="text-blue-600 hover:underline">www.{SITE_CONFIG.domain}</a>
                 </p>
               </div>
 
               <div className="pt-2 border-t border-black/5">
                 <h4 className="font-semibold text-slate-900 mb-1">Haftungsausschluss (Disclaimer)</h4>
                 <p className="text-[#86868b] leading-normal">
-                  Die auf Stoxa.co bereitgestellten Finanzsimulationen, Berechnungen und Daten dienen ausschließlich Informations- und Bildungszwecken. Sie stellen keinerlei Anlageberatung, Kauf- oder Verkaufsempfehlung für Finanzinstrumente dar.
+                  {SITE_CONFIG.disclaimer}
                 </p>
               </div>
             </div>

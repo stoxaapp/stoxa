@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Stoxa // Financial Scenario Engine",
@@ -13,6 +12,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            tailwind.config = {
+              darkMode: 'class',
+            }
+          `
+        }} />
+      </head>
       <body className="antialiased min-h-screen">
         {children}
       </body>

@@ -9,7 +9,7 @@ interface AIQuickBriefingProps {
   currentPrice?: number;
   bullTarget?: number;
   bearTarget?: number;
-  timeframe?: number; // Neu: Nimmt den dynamischen Slider-Wert entgegen
+  timeframe?: number;
 }
 
 export default function AIQuickBriefing({ 
@@ -47,101 +47,102 @@ export default function AIQuickBriefing({
       {/* Trigger-Button */}
       <button
         onClick={handleOpen}
-        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white text-sm font-medium rounded-xl shadow-lg shadow-blue-600/20 transition-all transform hover:scale-[1.02] active:scale-[0.98] border border-blue-400/30 cursor-pointer"
+        className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white text-xs sm:text-sm font-medium rounded-xl shadow-lg shadow-blue-600/20 transition-all transform hover:scale-[1.02] active:scale-[0.98] border border-blue-400/30 cursor-pointer shrink-0"
       >
-        <Sparkles className="w-4 h-4 text-blue-200 animate-pulse" />
+        <Sparkles className="w-4 h-4 text-blue-200 animate-pulse shrink-0" />
         <span>⚡ AI Quick Briefing</span>
       </button>
 
       {/* Modal / Pop-up */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-          <div className="relative w-full max-w-xl bg-white dark:bg-[#161e2e] border border-black/[0.08] dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden text-[#1d1d1f] dark:text-slate-100 transition-colors">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+          {/* Container mit maximaler Höhe & Flex-Layout für mobiles Scrollen */}
+          <div className="relative w-full max-w-xl max-h-[85vh] bg-white dark:bg-[#161e2e] border border-black/[0.08] dark:border-slate-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-[#1d1d1f] dark:text-slate-100 transition-colors">
             
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-black/[0.06] dark:border-slate-800 bg-slate-50/50 dark:bg-[#161e2e]/50">
+            {/* Header (Sticky oben) */}
+            <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-black/[0.06] dark:border-slate-800 bg-slate-50/80 dark:bg-[#161e2e]/80 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/50 rounded-xl text-blue-600 dark:text-blue-400">
+                <div className="p-2 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/50 rounded-xl text-blue-600 dark:text-blue-400">
                   <Cpu className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-base tracking-tight">Stoxa Intelligence Briefing</h3>
-                  <p className="text-xs text-[#86868b] dark:text-slate-400">Algorithmic Simulation Report • {ticker.toUpperCase()} ({timeframe}M Horizon)</p>
+                  <h3 className="font-bold text-sm sm:text-base tracking-tight">Stoxa Intelligence Briefing</h3>
+                  <p className="text-[11px] sm:text-xs text-[#86868b] dark:text-slate-400">Algorithmic Report • {ticker.toUpperCase()} ({timeframe}M)</p>
                 </div>
               </div>
               <button 
                 onClick={() => setIsOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-100 hover:bg-black/5 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+                className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-100 hover:bg-black/5 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Content */}
-            <div className="p-6">
+            {/* Content (Scrollbarer Bereich für Smartphones) */}
+            <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-4 text-xs">
               {isLoading ? (
-                <div className="py-16 flex flex-col items-center justify-center gap-3">
+                <div className="py-12 flex flex-col items-center justify-center gap-3">
                   <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                  <p className="text-xs font-medium text-[#86868b] dark:text-slate-400 animate-pulse">Processing {timeframe}-month volatility corridors & CAGR models...</p>
+                  <p className="text-xs font-medium text-[#86868b] dark:text-slate-400 animate-pulse">Processing {timeframe}-month volatility corridors...</p>
                 </div>
               ) : (
-                <div className="space-y-5 text-xs">
+                <div className="space-y-4">
                   
-                  {/* Badges / Metrics */}
+                  {/* Badges */}
                   <div className="flex flex-wrap gap-2 items-center">
-                    <span className={`px-3 py-1 rounded-full font-semibold border ${risk.color}`}>
+                    <span className={`px-3 py-1 rounded-full font-semibold border text-[11px] sm:text-xs ${risk.color}`}>
                       {risk.label} (Score: {volatilityScore}/100)
                     </span>
-                    <span className="px-3 py-1 rounded-full font-semibold bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/50">
+                    <span className="px-3 py-1 rounded-full font-semibold bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/50 text-[11px] sm:text-xs">
                       Horizon: {timeframe} Months ({yearsLabel} Yrs)
                     </span>
                   </div>
 
-                  {/* Structured Financial Report Blocks */}
+                  {/* Report Blocks */}
                   <div className="space-y-3">
-                    <div className="p-4 bg-[#f5f5f7] dark:bg-slate-900 border border-black/[0.04] dark:border-slate-800 rounded-2xl space-y-1">
-                      <div className="flex items-center justify-between font-semibold text-slate-800 dark:text-slate-200 text-sm">
-                        <span className="flex items-center gap-2"><TrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Bullish Scenario Ceiling</span>
+                    <div className="p-3.5 sm:p-4 bg-[#f5f5f7] dark:bg-slate-900 border border-black/[0.04] dark:border-slate-800 rounded-2xl space-y-1">
+                      <div className="flex items-center justify-between font-semibold text-slate-800 dark:text-slate-200 text-xs sm:text-sm">
+                        <span className="flex items-center gap-2"><TrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" /> Bullish Scenario Ceiling</span>
                         <span className="text-emerald-600 dark:text-emerald-400 font-mono">${bullTarget.toFixed(2)} (+{upsidePercent}%)</span>
                       </div>
-                      <p className="text-[#86868b] dark:text-slate-400 leading-relaxed pt-1">
+                      <p className="text-[#86868b] dark:text-slate-400 leading-relaxed pt-1 text-[11px] sm:text-xs">
                         Driven by compounding historical velocity, the upper corridor projects a resistance ceiling of <strong className="text-slate-700 dark:text-slate-200">${bullTarget.toFixed(2)}</strong> over the next {timeframe} months.
                       </p>
                     </div>
 
-                    <div className="p-4 bg-[#f5f5f7] dark:bg-slate-900 border border-black/[0.04] dark:border-slate-800 rounded-2xl space-y-1">
-                      <div className="flex items-center justify-between font-semibold text-slate-800 dark:text-slate-200 text-sm">
-                        <span className="flex items-center gap-2"><BarChart3 className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Risk & Dispersion Profile</span>
+                    <div className="p-3.5 sm:p-4 bg-[#f5f5f7] dark:bg-slate-900 border border-black/[0.04] dark:border-slate-800 rounded-2xl space-y-1">
+                      <div className="flex items-center justify-between font-semibold text-slate-800 dark:text-slate-200 text-xs sm:text-sm">
+                        <span className="flex items-center gap-2"><BarChart3 className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" /> Risk & Dispersion Profile</span>
                         <span className="text-blue-600 dark:text-blue-400 font-mono">Score {volatilityScore}/100</span>
                       </div>
-                      <p className="text-[#86868b] dark:text-slate-400 leading-relaxed pt-1">
-                        Annualized standard deviation indicates standard mean-reversion behavior. Symmetrical corridor modeling outlines balanced probabilistic outcomes for the selected timeframe.
+                      <p className="text-[#86868b] dark:text-slate-400 leading-relaxed pt-1 text-[11px] sm:text-xs">
+                        Annualized standard deviation indicates standard mean-reversion behavior. Symmetrical corridor modeling outlines balanced probabilistic outcomes.
                       </p>
                     </div>
 
-                    <div className="p-4 bg-[#f5f5f7] dark:bg-slate-900 border border-black/[0.04] dark:border-slate-800 rounded-2xl space-y-1">
-                      <div className="flex items-center justify-between font-semibold text-slate-800 dark:text-slate-200 text-sm">
-                        <span className="flex items-center gap-2"><ShieldAlert className="w-4 h-4 text-rose-600 dark:text-rose-400" /> Bear Stress Floor</span>
+                    <div className="p-3.5 sm:p-4 bg-[#f5f5f7] dark:bg-slate-900 border border-black/[0.04] dark:border-slate-800 rounded-2xl space-y-1">
+                      <div className="flex items-center justify-between font-semibold text-slate-800 dark:text-slate-200 text-xs sm:text-sm">
+                        <span className="flex items-center gap-2"><ShieldAlert className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" /> Bear Stress Floor</span>
                         <span className="text-rose-600 dark:text-rose-400 font-mono">${bearTarget.toFixed(2)} ({downsidePercent}%)</span>
                       </div>
-                      <p className="text-[#86868b] dark:text-slate-400 leading-relaxed pt-1">
-                        Downside volatility stress testing establishes primary structural support near the <strong className="text-slate-700 dark:text-slate-200">${bearTarget.toFixed(2)}</strong> threshold under adverse market trajectories.
+                      <p className="text-[#86868b] dark:text-slate-400 leading-relaxed pt-1 text-[11px] sm:text-xs">
+                        Downside volatility stress testing establishes primary structural support near the <strong className="text-slate-700 dark:text-slate-200">${bearTarget.toFixed(2)}</strong> threshold under adverse trajectories.
                       </p>
                     </div>
                   </div>
 
                   <p className="text-[10px] text-[#86868b] dark:text-slate-500 pt-2 text-center border-t border-black/[0.06] dark:border-slate-800">
-                    ⚠️ Generated autonomously via Stoxa.co Scenario Simulation Engine. For informational and research purposes only. Not financial advice.
+                    ⚠️ Generated autonomously via Stoxa.co Scenario Simulation Engine. Not financial advice.
                   </p>
                 </div>
               )}
             </div>
 
-            {/* Footer */}
-            <div className="px-6 py-3.5 bg-slate-50 dark:bg-slate-950 border-t border-black/[0.06] dark:border-slate-800 flex justify-end">
+            {/* Footer (Sticky unten) */}
+            <div className="px-5 sm:px-6 py-3 bg-slate-50 dark:bg-slate-950 border-t border-black/[0.06] dark:border-slate-800 flex justify-end shrink-0">
               <button
                 onClick={() => setIsOpen(false)}
-                className="px-4 py-2 bg-black dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-medium rounded-xl transition-colors cursor-pointer"
+                className="w-full sm:w-auto px-5 py-2.5 bg-black dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-medium rounded-xl transition-colors cursor-pointer"
               >
                 Close Briefing
               </button>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/react";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://stoxa.co"),
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
     siteName: "Stoxa.co",
     images: [
       {
-        url: "https://stoxa.co/og-image.png", // Dein Social-Media-Banner
+        url: "https://stoxa.co/og-image.png",
         width: 1200,
         height: 630,
         alt: "Stoxa.co Financial Scenario Corridor",
@@ -71,6 +72,7 @@ export default function RootLayout({
       </head>
       <body className="antialiased min-h-screen">
         {children}
+        <Analytics />
       </body>
     </html>
   );

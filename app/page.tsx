@@ -583,7 +583,7 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
 
       </main>
 
-      {/* HOW IT WORKS MODAL */}
+{/* HOW IT WORKS MODAL */}
       {showHowItWorks && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 border border-black/10 dark:border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5">
@@ -597,18 +597,30 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
               </button>
             </div>
 
-            <div className="space-y-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            <div className="space-y-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
               <div>
                 <h4 className="font-semibold text-slate-900 dark:text-white mb-1">1. Symmetrical 50/50 Layout</h4>
-                <p>The chart is split exactly 1:1. The left side reflects real daily historical market data matching your selected horizon. The right side forecasts future performance symmetrically.</p>
+                <p>The chart is split exactly 1:1. The left side reflects real daily historical market data matching your selected time horizon (3 to 24 months). The right side forecasts future performance symmetrically over the exact same period.</p>
               </div>
+
               <div>
-                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">2. Dynamic Volatility & Trend</h4>
-                <p>Stoxa computes real annualized volatility ($\sigma$) and CAGR trend metrics dynamically from each asset's past trading history to project realistic upper (Bull) and lower (Bear) boundaries.</p>
+                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">2. Volatility & CAGR Trend Engine</h4>
+                <p>Stoxa computes real annualized volatility (&sigma;) and Compound Annual Growth Rate (CAGR) metrics dynamically from each asset's historical trading data to project mathematically balanced upper (Bull), base, and lower (Bear) scenario boundaries.</p>
               </div>
+
               <div>
-                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">3. Universal Live Search</h4>
-                <p>Type any company name or ticker globally (e.g. "General Motors", "Walmart") to instantly query live market listings.</p>
+                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">3. Volatility Score & Briefing</h4>
+                <p>Each asset is assigned a calculated Volatility Score (0–100) based on historical variance and scenario dispersion, categorizing assets into Low, Moderate, or High Volatility corridors for quick risk profile assessment.</p>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">4. Live Context & Headlines</h4>
+                <p>Directly beneath the corridor forecast, Stoxa integrates a real-time news feed providing publisher headlines and context on catalysts driving price movement for the selected ticker.</p>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">5. Universal Live Search</h4>
+                <p>Type any global company name or ticker symbol (e.g., "General Motors", "Apple", "Bitcoin") to instantly query live market listings and launch a simulation.</p>
               </div>
             </div>
 

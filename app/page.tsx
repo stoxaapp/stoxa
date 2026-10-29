@@ -665,12 +665,12 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
         </div>
       )}
 
-      {/* IMPRESSUM / LEGAL MODAL */}
+{/* IMPRESSUM / LEGAL MODAL */}
       {showImpressum && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="relative w-full max-w-lg max-h-[85vh] bg-white dark:bg-[#161e2e] border border-black/[0.08] dark:border-slate-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-[#1d1d1f] dark:text-slate-100">
             <div className="flex items-center justify-between px-6 py-4 border-b border-black/[0.06] dark:border-slate-800 bg-slate-50/80 dark:bg-[#161e2e]/80">
-              <h3 className="font-bold text-base">Legal Notice & Disclaimer</h3>
+              <h3 className="font-bold text-base">Impressum & Legal Notice</h3>
               <button 
                 onClick={() => setShowImpressum(false)}
                 className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-100 hover:bg-black/5 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
@@ -680,16 +680,29 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
             </div>
             <div className="p-6 overflow-y-auto space-y-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
               <div>
-                <strong className="block text-[#1d1d1f] dark:text-white mb-1">Information according to § 5 TMG / General Disclaimer</strong>
-                Stoxa.co is an independent financial simulation and educational research tool. All generated price corridors, scenario projections, volatility scores, and briefing reports are calculated automatically using historical market data algorithms.
+                <strong className="block text-[#1d1d1f] dark:text-white mb-1">Angaben gemäß § 5 TMG</strong>
+                <p>
+                  {SITE_CONFIG.author?.name || "Stoxa.co Operator"}<br />
+                  {SITE_CONFIG.author?.address || "Germany"}<br />
+                </p>
               </div>
+
               <div>
-                <strong className="block text-[#1d1d1f] dark:text-white mb-1">No Financial Advice</strong>
-                Nothing contained on Stoxa.co constitutes investment advice, financial advice, trading advice, or any other sort of advice. You should not treat any of the platform's content as such. Always conduct your own due diligence and consult a certified financial advisor before making investment decisions.
+                <strong className="block text-[#1d1d1f] dark:text-white mb-1">Kontakt</strong>
+                <p>
+                  E-Mail: {SITE_CONFIG.author?.email || `support@${SITE_CONFIG.domain}`}<br />
+                  Website: {SITE_CONFIG.domain}
+                </p>
               </div>
+
               <div>
-                <strong className="block text-[#1d1d1f] dark:text-white mb-1">Contact & Hosting</strong>
-                Hosted via Vercel Inc. For inquiries, reach out via our official domain channels at Stoxa.co.
+                <strong className="block text-[#1d1d1f] dark:text-white mb-1">Haftungsausschluss (Disclaimer)</strong>
+                {SITE_CONFIG.name} is an independent financial simulation and educational research tool. All generated price corridors, scenario projections, volatility scores, and briefing reports are calculated automatically using historical market data algorithms.
+              </div>
+
+              <div>
+                <strong className="block text-[#1d1d1f] dark:text-white mb-1">Keine Finanzberatung</strong>
+                Die Inhalte dieser Website stellen keine Anlageberatung, Finanzberatung oder Kaufempfehlung dar. Vor jeder Investitionsentscheidung sollten eigene Analysen durchgeführt oder ein zertifizierter Finanzberater konsultiert werden.
               </div>
             </div>
             <div className="px-6 py-3 bg-slate-50 dark:bg-slate-950 border-t border-black/[0.06] dark:border-slate-800 flex justify-end">

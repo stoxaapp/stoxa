@@ -299,3 +299,148 @@ export default function StoxaApp() {
             <div className="flex items-center gap-4 text-xs font-medium">
               <span className="flex items-center gap-1.5 text-slate-700"><span className="w-2 h-2 rounded-full bg-slate-800"></span> History</span>
               <span className="flex items-center gap-1.5 text-emerald-600"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Bull Case</span>
+              <span className="flex items-center gap-1.5 text-blue-600"><span className="w-2 h-2 rounded-full bg-blue-600"></span> Base Case</span>
+              <span className="flex items-center gap-1.5 text-rose-600"><span className="w-2 h-2 rounded-full bg-rose-500"></span> Bear Case</span>
+            </div>
+          </div>
+
+          <div className="h-[400px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={formattedChartData}>
+                <XAxis dataKey="label" stroke="#86868b" fontSize={11} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                <YAxis stroke="#86868b" fontSize={12} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#ffffff', borderColor: 'rgba(0,0,0,0.1)', borderRadius: '12px', color: '#1d1d1f', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
+                />
+                <Line type="monotone" dataKey="Historical" stroke="#1d1d1f" strokeWidth={1.8} dot={false} connectNulls />
+                <Line type="monotone" dataKey="Bull" stroke="#10b981" strokeWidth={1.8} strokeDasharray="4 4" dot={false} connectNulls />
+                <Line type="monotone" dataKey="Base" stroke="#2563eb" strokeWidth={1.8} strokeDasharray="4 4" dot={false} connectNulls />
+                <Line type="monotone" dataKey="Bear" stroke="#f43f5e" strokeWidth={1.8} strokeDasharray="4 4" dot={false} connectNulls />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <footer className="pt-6 pb-8 border-t border-black/[0.06] flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#86868b]">
+          <div>
+            {SITE_CONFIG.name} is a predictive financial simulation engine for educational & research purposes.
+          </div>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setShowImpressum(true)} 
+              className="hover:text-blue-600 font-medium transition-colors underline underline-offset-4"
+            >
+              Legal & Imprint
+            </button>
+            <span>•</span>
+            <span>© {new Date().getFullYear()} {SITE_CONFIG.domain}</span>
+          </div>
+        </footer>
+
+      </main>
+
+      {/* HOW IT WORKS MODAL */}
+      {showHowItWorks && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-black/10 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+            <div className="flex items-center justify-between border-b border-black/5 pb-4">
+              <div className="flex items-center gap-2">
+                <HelpCircle className="w-5 h-5 text-blue-600" />
+                <h3 className="font-semibold text-lg text-[#1d1d1f]">How Stoxa.co Works</h3>
+              </div>
+              <button onClick={() => setShowHowItWorks(false)} className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs text-slate-600 leading-relaxed">
+              <div>
+                <h4 className="font-semibold text-slate-900 mb-1">1. Symmetrical 50/50 Layout</h4>
+                <p>The chart is split exactly 1:1. The left side reflects real daily historical market data matching your selected horizon. The right side forecasts future performance symmetrically.</p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-slate-900 mb-1">2. Dynamic Volatility & Trend</h4>
+                <p>Stoxa computes real annualized volatility ($\sigma$) and CAGR trend metrics dynamically from each asset's past trading history to project realistic upper (Bull) and lower (Bear) boundaries.</p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-slate-900 mb-1">3. Universal Search</h4>
+                <p>You can search for any stock, crypto asset, or index ticker globally using Yahoo Finance data feeds.</p>
+              </div>
+            </div>
+
+            <button 
+              onClick={() => setShowHowItWorks(false)}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-xl text-xs transition-colors shadow-md shadow-blue-600/20"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* LEGAL & IMPRINT MODAL */}
+      {showImpressum && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-black/10 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+            
+            <div className="flex items-center justify-between border-b border-black/5 pb-4">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-blue-600" />
+                <h3 className="font-semibold text-lg text-[#1d1d1f]">Legal & Privacy</h3>
+              </div>
+              <button onClick={() => setShowImpressum(false)} className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs text-[#1d1d1f] leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
+              <div>
+                <h4 className="font-semibold text-slate-900 mb-1">Provider Identification</h4>
+                <p className="text-slate-600">
+                  {SITE_CONFIG.owner.name}<br />
+                  {SITE_CONFIG.owner.street}<br />
+                  {SITE_CONFIG.owner.city}<br />
+                  {SITE_CONFIG.owner.country}
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-slate-900 mb-1">Contact</h4>
+                <p className="text-slate-600">
+                  Email: <a href={`mailto:${SITE_CONFIG.owner.email}`} className="text-blue-600 hover:underline">{SITE_CONFIG.owner.email}</a><br />
+                  Website: <a href={`https://${SITE_CONFIG.domain}`} className="text-blue-600 hover:underline">www.{SITE_CONFIG.domain}</a>
+                </p>
+              </div>
+
+              <div className="pt-2 border-t border-black/5">
+                <h4 className="font-semibold text-slate-900 mb-1">Privacy Policy</h4>
+                <p className="text-slate-600 leading-normal">
+                  {SITE_CONFIG.privacyText}
+                </p>
+              </div>
+
+              <div className="pt-2 border-t border-black/5">
+                <h4 className="font-semibold text-slate-900 mb-1">Disclaimer</h4>
+                <p className="text-[#86868b] leading-normal">
+                  {SITE_CONFIG.disclaimer}
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <button 
+                onClick={() => setShowImpressum(false)}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-xl text-xs transition-colors shadow-md shadow-blue-600/20"
+              >
+                Close
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}

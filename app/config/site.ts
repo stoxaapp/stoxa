@@ -3,14 +3,14 @@ export const SITE_CONFIG = {
   domain: "stoxa.co",
   
   owner: {
-    name: "Vorname Nachname",
-    street: "Musterstraße 12",
+    name: "Firstname Lastname",
+    street: "Sample Street 12",
     city: "10115 Berlin",
-    country: "Deutschland",
-    email: "deine-email@domain.de",
+    country: "Germany",
+    email: "contact@stoxa.co",
   },
 
-  disclaimer: "Die auf Stoxa.co bereitgestellten Finanzsimulationen, Berechnungen und Daten dienen ausschließlich Informations- und Bildungszwecken. Sie stellen keinerlei Anlageberatung, Kauf- oder Verkaufsempfehlung dar.",
+  disclaimer: "The financial simulations, calculations, and data provided on Stoxa.co are for educational and informational purposes only and do not constitute financial advice, investment recommendations, or an endorsement.",
 
-  privacyText: "Wir nehmen den Schutz Ihrer persönlichen Daten sehr ernst. Da Stoxa.co als reines Analyse- und Simulationstool im Frontend betrieben wird, erheben, speichern oder verarbeiten wir keinerlei personenbezogene Daten auf unseren Servern. Abfragen von Tickersymbolen werden anonym über Proxy-Schnittstellen an Finanzdatenprovider weitergeleitet."
+  privacyText: "We take your privacy seriously. Stoxa.co operates primarily as a client-side simulation tool. We do not store or track personal user data on our servers. Ticker queries are processed anonymously through market data interfaces."
 };

@@ -23,9 +23,9 @@ interface NewsArticle {
   providerPublishTime: string;
 }
 
-export default function StoxaApp() {
+export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: string }) {
   const [query, setQuery] = useState("");
-  const [selectedTicker, setSelectedTicker] = useState("NVDA");
+  const [selectedTicker, setSelectedTicker] = useState(initialTicker);
   const [timeframe, setTimeframe] = useState(12);
   
   const [loading, setLoading] = useState(false);

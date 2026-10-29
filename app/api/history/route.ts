@@ -14,7 +14,6 @@ const ASSET_PRESETS: Record<string, { trend: number; vol: number; maxDD: number 
 async function resolveSymbol(input: string): Promise<string> {
   const clean = input.toUpperCase().trim();
   
-  // Bekannte Shortcuts direkt mappen
   const shortcuts: Record<string, string> = {
     "GOOGLE": "GOOGL", "ALPHABET": "GOOGL", "BITCOIN": "BTC-USD",
     "APPLE": "AAPL", "TESLA": "TSLA", "MICROSOFT": "MSFT",
@@ -23,12 +22,11 @@ async function resolveSymbol(input: string): Promise<string> {
   };
   if (shortcuts[clean]) return shortcuts[clean];
 
-  // Wenn der Input Leerzeichen enthält (z.B. "General Motors"), suchen wir nach dem Ticker
   try {
     const searchUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(input)}&quotesCount=1`;
     const res = await fetch(searchUrl, {
       headers: { 'User-Agent': 'Mozilla/5.0' },
-      next: { revalidate: 86400 } // Cache für 24h
+      next: { revalidate: 86400 }
     });
     const data = await res.json();
     if (data.quotes && data.quotes.length > 0) {
@@ -43,11 +41,10 @@ async function resolveSymbol(input: string): Promise<string> {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const rawQuery = searchParams.get('symbol'] || 'NVDA';
+  const rawQuery = searchParams.get('symbol') || 'NVDA';
   const timeframeMonths = parseInt(searchParams.get('timeframe') || '12', 10);
 
   try {
-    // Automatische Auflösung von Namen zu Ticker
     const symbol = await resolveSymbol(rawQuery);
 
     const range = timeframeMonths > 12 ? '2y' : '1y';

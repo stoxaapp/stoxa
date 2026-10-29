@@ -167,21 +167,15 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
 
   const historyPoints = assetData.history || [];
 
-  // Robuste X-Achsen Aufbereitung: Zeigt saubere Monatslabels beim Monatswechsel
-  let lastMonth = "";
+  // Saubere Aufbereitung mit Standard-Labels
   const formattedChartData: any[] = historyPoints.map((h) => {
     const d = new Date(h.date);
-    const monthStr = !isNaN(d.getTime()) 
+    const label = !isNaN(d.getTime()) 
       ? d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }) 
       : h.date;
 
-    const showLabel = monthStr !== lastMonth;
-    if (showLabel) {
-      lastMonth = monthStr;
-    }
-
     return {
-      label: showLabel ? monthStr : "",
+      label,
       rawDate: h.date,
       Historical: h.price,
       Bull: null,
@@ -205,14 +199,10 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
     const daysAhead = Math.round(progress * (timeframe * 30));
     const futureDate = new Date(currentDate.getTime() + daysAhead * 24 * 60 * 60 * 1000);
     
-    const monthStr = futureDate.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
-    const showLabel = monthStr !== lastMonth;
-    if (showLabel) {
-      lastMonth = monthStr;
-    }
+    const label = futureDate.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
     
     formattedChartData.push({
-      label: showLabel ? monthStr : "",
+      label,
       rawDate: futureDate.toISOString(),
       Historical: null,
       Bull: Number((assetData.currentPrice + (bullTarget - assetData.currentPrice) * progress).toFixed(2)),
@@ -456,7 +446,19 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
             <div className="h-[380px] min-w-[550px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={formattedChartData}>
-                  <XAxis dataKey="label" stroke={darkMode ? "#64748b" : "#86868b"} fontSize={11} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                  <XAxis 
+                    dataKey="label" 
+                    stroke={darkMode ? "#64748b" : "#86868b"} 
+                    fontSize={11} 
+                    tickLine={false} 
+                    axisLine={false} 
+                    interval={0}
+                    tickFormatter={(value, index) => {
+                      if (index === 0) return value;
+                      const prevValue = formattedChartData[index - 1]?.label;
+                      return value !== prevValue ? value : '';
+                    }}
+                  />
                   <YAxis stroke={darkMode ? "#64748b" : "#86868b"} fontSize={12} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
                   <Tooltip 
                     contentStyle={{ 

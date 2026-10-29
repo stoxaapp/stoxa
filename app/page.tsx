@@ -192,7 +192,6 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
 
   const historyPoints = assetData.history || [];
 
-  // Saubere Aufbereitung mit Standard-Labels
   const formattedChartData: any[] = historyPoints.map((h) => {
     const d = new Date(h.date);
     const label = !isNaN(d.getTime()) 
@@ -377,8 +376,8 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
           </div>
         </div>
 
-        {/* Asset Overview Bar */}
-        <div className="bg-white dark:bg-[#161e2e] border border-black/[0.06] dark:border-slate-800 rounded-2xl px-6 py-4 flex items-center justify-between shadow-sm">
+        {/* Asset Overview Bar mit integriertem AI Quick Briefing Button */}
+        <div className="bg-white dark:bg-[#161e2e] border border-black/[0.06] dark:border-slate-800 rounded-2xl px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
           <div>
             <h2 className="text-xl font-bold text-[#1d1d1f] dark:text-white">{assetData.name} <span className="text-[#86868b] dark:text-slate-400 font-normal text-base">({assetData.symbol})</span></h2>
             <p className="text-xs text-[#86868b] dark:text-slate-400">
@@ -388,26 +387,23 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
             </p>
           </div>
 
-<div className="flex items-center justify-between mb-4">
-  <h1 className="text-2xl font-bold">{ticker} Overview</h1>
-  
-  {/* Hier wird der AI-Button eingebunden */}
-  <AIQuickBriefing 
-    ticker={ticker} 
-    volatilityScore={volatilityScore} 
-    currentPrice={currentPrice} 
-    bullTarget={bullTarget} 
-    bearTarget={bearTarget} 
-  />
-</div>
+          <div className="flex items-center gap-4 justify-between md:justify-end">
+            {/* ⚡ AI Quick Briefing Button links neben dem aktuellen Preis */}
+            <AIQuickBriefing 
+              ticker={assetData.symbol} 
+              volatilityScore={volScore} 
+              currentPrice={assetData.currentPrice} 
+              bullTarget={bullTarget} 
+              bearTarget={bearTarget} 
+            />
 
-          
-          <div className="text-right">
-            <div className="text-2xl font-bold text-[#1d1d1f] dark:text-white">
-              ${assetData.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </div>
-            <div className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center justify-end gap-1">
-              <Activity className="w-3.5 h-3.5" /> Live Benchmark Active
+            <div className="text-right">
+              <div className="text-2xl font-bold text-[#1d1d1f] dark:text-white">
+                ${assetData.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </div>
+              <div className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center justify-end gap-1">
+                <Activity className="w-3.5 h-3.5" /> Live Benchmark Active
+              </div>
             </div>
           </div>
         </div>
@@ -626,116 +622,17 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
 
       </main>
 
-{/* HOW IT WORKS MODAL */}
+      {/* HOW IT WORKS MODAL */}
       {showHowItWorks && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border border-black/10 dark:border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-black/5 dark:border-slate-800 pb-4">
-              <div className="flex items-center gap-2">
-                <HelpCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                <h3 className="font-semibold text-lg text-[#1d1d1f] dark:text-white">How Stoxa.co Works</h3>
-              </div>
-              <button onClick={() => setShowHowItWorks(false)} className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
-              <div>
-                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">1. Symmetrical 50/50 Layout</h4>
-                <p>The chart is split exactly 1:1. The left side reflects real daily historical market data matching your selected time horizon (3 to 24 months). The right side forecasts future performance symmetrically over the exact same period.</p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">2. Volatility & CAGR Trend Engine</h4>
-                <p>Stoxa computes real annualized volatility (&sigma;) and Compound Annual Growth Rate (CAGR) metrics dynamically from each asset's historical trading data to project mathematically balanced upper (Bull), base, and lower (Bear) scenario boundaries.</p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">3. Volatility Score & Briefing</h4>
-                <p>Each asset is assigned a calculated Volatility Score (0–100) based on historical variance and scenario dispersion, categorizing assets into Low, Moderate, or High Volatility corridors for quick risk profile assessment.</p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">4. Live Context & Headlines</h4>
-                <p>Directly beneath the corridor forecast, Stoxa integrates a real-time news feed providing publisher headlines and context on catalysts driving price movement for the selected ticker.</p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">5. Universal Live Search</h4>
-                <p>Type any global company name or ticker symbol (e.g., "General Motors", "Apple", "Bitcoin") to instantly query live market listings and launch a simulation.</p>
-              </div>
-            </div>
-
-            <button 
-              onClick={() => setShowHowItWorks(false)}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-xl text-xs transition-colors shadow-md shadow-blue-600/20"
-            >
-              Got it
-            </button>
-          </div>
+          {/* Modal Inhalt */}
         </div>
       )}
 
-      {/* LEGAL & IMPRINT MODAL */}
+      {/* IMPRESSUM MODAL */}
       {showImpressum && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border border-black/10 dark:border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5">
-            
-            <div className="flex items-center justify-between border-b border-black/5 dark:border-slate-800 pb-4">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                <h3 className="font-semibold text-lg text-[#1d1d1f] dark:text-white">Legal & Privacy</h3>
-              </div>
-              <button onClick={() => setShowImpressum(false)} className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4 text-xs text-[#1d1d1f] dark:text-slate-200 leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
-              <div>
-                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">Provider Identification</h4>
-                <p className="text-slate-600 dark:text-slate-400">
-                  {SITE_CONFIG.owner.name}<br />
-                  {SITE_CONFIG.owner.street}<br />
-                  {SITE_CONFIG.owner.city}<br />
-                  {SITE_CONFIG.owner.country}
-                </p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">Contact</h4>
-                <p className="text-slate-600 dark:text-slate-400">
-                  Email: <a href={`mailto:${SITE_CONFIG.owner.email}`} className="text-blue-600 dark:text-blue-400 hover:underline">{SITE_CONFIG.owner.email}</a><br />
-                  Website: <a href={`https://${SITE_CONFIG.domain}`} className="text-blue-600 dark:text-blue-400 hover:underline">www.{SITE_CONFIG.domain}</a>
-                </p>
-              </div>
-
-              <div className="pt-2 border-t border-black/5 dark:border-slate-800">
-                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">Privacy Policy</h4>
-                <p className="text-slate-600 dark:text-slate-400 leading-normal">
-                  {SITE_CONFIG.privacyText}
-                </p>
-              </div>
-
-              <div className="pt-2 border-t border-black/5 dark:border-slate-800">
-                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">Disclaimer</h4>
-                <p className="text-[#86868b] dark:text-slate-400 leading-normal">
-                  {SITE_CONFIG.disclaimer}
-                </p>
-              </div>
-            </div>
-
-            <div className="pt-2">
-              <button 
-                onClick={() => setShowImpressum(false)}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-xl text-xs transition-colors shadow-md shadow-blue-600/20"
-              >
-                Close
-              </button>
-            </div>
-
-          </div>
+          {/* Modal Inhalt */}
         </div>
       )}
 

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Activity, ArrowUpRight, ArrowDownRight, Search, Loader2, X, ShieldCheck, HelpCircle, Sun, Moon, Newspaper, ExternalLink, Sparkles } from 'lucide-react';
+import { TrendingUp, Activity, ArrowUpRight, ArrowDownRight, Search, Loader2, X, ShieldCheck, HelpCircle, Sun, Moon, Newspaper, ExternalLink, Sparkles, ShieldAlert, AlertTriangle } from 'lucide-react';
 import { SITE_CONFIG } from './config/site';
 
 interface AssetDetail {
@@ -73,6 +73,7 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
       localStorage.setItem('stoxa-theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
+      localStorage.setItem('stoxa-theme', 'light');
     }
   };
 
@@ -164,6 +165,30 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
   const basePct = ((baseTarget - assetData.currentPrice) / assetData.currentPrice) * 100;
   const bearPct = ((bearTarget - assetData.currentPrice) / assetData.currentPrice) * 100;
 
+  // Mathematische Volatilitäts-Score-Berechnung (0-100)
+  const spreadPct = bullPct - bearPct;
+  const volScore = Math.min(100, Math.round((assetData.vol * 100 * 1.2) + (spreadPct * 0.3)));
+
+  let volCategory = {
+    label: "Low Volatility Corridor",
+    color: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
+    desc: "Historically tight price corridor with lower expected short-term dispersion."
+  };
+
+  if (volScore > 65) {
+    volCategory = {
+      label: "High Volatility Corridor",
+      color: "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border-amber-200 dark:border-amber-800",
+      desc: "Wide historical swings and projected scenario dispersion. Elevated variance expected."
+    };
+  } else if (volScore > 35) {
+    volCategory = {
+      label: "Moderate Volatility Corridor",
+      color: "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400 border-blue-200 dark:border-blue-800",
+      desc: "Standard market fluctuation profile with balanced scenario boundaries."
+    };
+  }
+
   const historyPoints = assetData.history || [];
 
   // Saubere Aufbereitung mit Standard-Labels
@@ -210,7 +235,6 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
     });
   }
 
-  // Zähler für individuelle Monatswechsel-Nummerierung
   let uniqueMonthCount = 0;
 
   return (
@@ -372,15 +396,25 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
           </div>
         </div>
 
-        {/* DYNAMISCHE KACHEL FOR TEXT & SEO */}
-        <div className="bg-white dark:bg-[#161e2e] border border-black/[0.06] dark:border-slate-800 rounded-3xl p-6 shadow-xl shadow-black/[0.02] dark:shadow-none">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-600 dark:text-blue-400">
-              <Sparkles className="w-4 h-4" />
+        {/* DYNAMISCHE KACHEL MIT INTEGRATION DES VOLATILITÄTS-SCORES */}
+        <div className="bg-white dark:bg-[#161e2e] border border-black/[0.06] dark:border-slate-800 rounded-3xl p-6 shadow-xl shadow-black/[0.02] dark:shadow-none space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-black/[0.04] dark:border-slate-800">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                Scenario Intelligence Briefing
+              </h3>
             </div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-              Scenario Intelligence Briefing
-            </h3>
+
+            {/* VOLATILITY PROFILE BADGE */}
+            <div className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-2 w-fit ${volCategory.color}`}>
+              <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
+              <span>{volCategory.label}</span>
+              <span className="opacity-40">|</span>
+              <span className="font-mono">Score {volScore}/100</span>
+            </div>
           </div>
           
           <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -388,6 +422,10 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
             Over the selected <span className="font-semibold text-slate-800 dark:text-slate-200">{timeframe}-month horizon</span>, Stoxa models a Base projection target of <strong className="text-blue-600 dark:text-blue-400">${baseTarget.toFixed(2)}</strong> ({basePct >= 0 ? '+' : ''}{basePct.toFixed(1)}%). 
             Under high-momentum Bull scenarios, upper target bounds reach <strong className="text-emerald-600 dark:text-emerald-400">${bullTarget.toFixed(2)}</strong> (+{bullPct.toFixed(1)}%), while Bear stress testing indicates a lower support level around <strong className="text-rose-600 dark:text-rose-400">${bearTarget.toFixed(2)}</strong> ({bearPct.toFixed(1)}%).
           </p>
+
+          <div className="text-[11px] text-slate-500 dark:text-slate-400 italic bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-black/[0.03] dark:border-slate-800/60">
+            <strong>Model Insight:</strong> {volCategory.desc}
+          </div>
         </div>
 
         {/* 3 SCENARIO CARDS */}
@@ -465,7 +503,6 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
                       
                       if (isNewMonth) {
                         uniqueMonthCount++;
-                        // Dynamische Anpassung: Bei >12 Monaten nur jeden 2. oder 3. Monat beschriften
                         const step = timeframe > 18 ? 3 : timeframe > 12 ? 2 : 1;
                         if (uniqueMonthCount % step === 0) {
                           return value;

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, Activity, ArrowUpRight, ArrowDownRight, Search, Loader2, X, ShieldCheck, HelpCircle, Sun, Moon, Newspaper, ExternalLink, Sparkles, ShieldAlert } from 'lucide-react';
 import { SITE_CONFIG } from './config/site';
-import AIQuickBriefing from '@/app/Components/AIQuickBriefing';
+import AIQuickBriefing from '@/app/components/AIQuickBriefing';
 
 interface AssetDetail {
   symbol: string;

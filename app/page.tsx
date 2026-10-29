@@ -42,11 +42,12 @@ export default function StoxaApp() {
     history: []
   });
 
-  // Dark Mode Auto-Detection & Toggle Sync
+  // Dark Mode Auto-Detection & Toggle Sync with HTML Class
   useEffect(() => {
-    const isDark = localStorage.getItem('stoxa-theme') === 'dark' ||
-      (!('stoxa-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    
+    const savedTheme = localStorage.getItem('stoxa-theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const isDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+
     setDarkMode(isDark);
     if (isDark) {
       document.documentElement.classList.add('dark');
@@ -56,18 +57,19 @@ export default function StoxaApp() {
   }, []);
 
   const toggleDarkMode = () => {
-    if (darkMode) {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('stoxa-theme', 'light');
-      setDarkMode(false);
-    } else {
+    const nextDark = !darkMode;
+    setDarkMode(nextDark);
+    
+    if (nextDark) {
       document.documentElement.classList.add('dark');
       localStorage.setItem('stoxa-theme', 'dark');
-      setDarkMode(true);
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('stoxa-theme', 'light');
     }
   };
 
-  // LIVE SEARCH DEBOUNCE EFFECT
+  // LIVE SEARCH DEBOUNCE EFFECT (Abfrage der Yahoo Live API)
   useEffect(() => {
     if (query.trim().length < 2) {
       setSuggestions([]);

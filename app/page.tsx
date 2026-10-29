@@ -564,6 +564,33 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
           )}
         </div>
 
+        {/* SEO INTERNAL LINKING GRID */}
+        <div className="pt-6 border-t border-black/[0.06] dark:border-slate-800">
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-[#86868b] dark:text-slate-400 mb-3">Popular Scenario Simulations</h4>
+          <div className="flex flex-wrap gap-2 text-xs">
+            {[
+              { name: "Nvidia", ticker: "NVDA" },
+              { name: "Apple", ticker: "AAPL" },
+              { name: "Microsoft", ticker: "MSFT" },
+              { name: "Tesla", ticker: "TSLA" },
+              { name: "Amazon", ticker: "AMZN" },
+              { name: "Alphabet", ticker: "GOOGL" },
+              { name: "Bitcoin", ticker: "BTC-USD" },
+              { name: "General Motors", ticker: "GM" },
+              { name: "Walmart", ticker: "WMT" },
+              { name: "BMW", ticker: "BMW.DE" }
+            ].map((item) => (
+              <a 
+                key={item.ticker}
+                href={`/asset/${item.ticker}`}
+                className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-black/10 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-blue-500 hover:text-blue-600 transition-all"
+              >
+                {item.name} ({item.ticker}) Forecast
+              </a>
+            ))}
+          </div>
+        </div>
+
         {/* Footer */}
         <footer className="pt-6 pb-8 border-t border-black/[0.06] dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#86868b] dark:text-slate-500">
           <div>

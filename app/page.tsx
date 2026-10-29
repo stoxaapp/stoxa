@@ -623,7 +623,7 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
 
       </main>
 
-     {/* HOW IT WORKS MODAL */}
+    {/* HOW IT WORKS MODAL */}
       {showHowItWorks && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="relative w-full max-w-lg max-h-[85vh] bg-white dark:bg-[#161e2e] border border-black/[0.08] dark:border-slate-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-[#1d1d1f] dark:text-slate-100">
@@ -638,7 +638,7 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
             </div>
             <div className="p-6 overflow-y-auto space-y-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
               <p>
-                <strong className="text-[#1d1d1f] dark:text-white">Stoxa.co</strong> is a global financial scenario engine built for predictive modeling, historical volatility tracking, and interactive stress-testing.
+                <strong className="text-[#1d1d1f] dark:text-white">Stoxa.co</strong> is a professional financial simulation engine built for predictive modeling, historical volatility tracking, and interactive stress-testing.
               </p>
               <div>
                 <strong className="block text-[#1d1d1f] dark:text-white mb-1">1. Symmetrical Corridor Modeling</strong>
@@ -646,11 +646,11 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
               </div>
               <div>
                 <strong className="block text-[#1d1d1f] dark:text-white mb-1">2. Quantitative Volatility Scores</strong>
-                Our proprietary algorithm weighs historical standard deviations and maximum drawdowns to rate assets from defensive low-risk to high-dispersion profiles (0-100 scale).
+                Our proprietary algorithm weighs historical standard deviations and maximum drawdowns to rate assets from defensive low-risk to high-dispersion profiles on a 0–100 scale.
               </div>
               <div>
                 <strong className="block text-[#1d1d1f] dark:text-white mb-1">3. AI-First Intelligence Briefings</strong>
-                Instantly generate real-time algorithmic summaries and key risk-reward metrics directly on-demand without external API dependencies.
+                Instantly generate real-time algorithmic summaries and key risk-reward metrics on-demand via the Quick Briefing engine, maintaining a lightning-fast client-side architecture.
               </div>
             </div>
             <div className="px-6 py-3 bg-slate-50 dark:bg-slate-950 border-t border-black/[0.06] dark:border-slate-800 flex justify-end">

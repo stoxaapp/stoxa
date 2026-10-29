@@ -15,6 +15,20 @@ interface AssetDetail {
   history: { date: string; price: number }[];
 }
 
+// Intelligente Such-Presets für Namen und Ticker
+const SEARCH_DIRECTORY = [
+  { symbol: "NVDA", name: "NVIDIA Corp." },
+  { symbol: "AAPL", name: "Apple Inc." },
+  { symbol: "GOOGL", name: "Alphabet Inc. (Google)" },
+  { symbol: "TSLA", name: "Tesla Inc." },
+  { symbol: "BTC-USD", name: "Bitcoin USD" },
+  { symbol: "MSFT", name: "Microsoft Corp." },
+  { symbol: "AMZN", name: "Amazon.com Inc." },
+  { symbol: "META", name: "Meta Platforms" },
+  { symbol: "VOW3.DE", name: "Volkswagen AG" },
+  { symbol: "SIE.DE", name: "Siemens AG" }
+];
+
 export default function StoxaApp() {
   const [query, setQuery] = useState("");
   const [selectedTicker, setSelectedTicker] = useState("NVDA");
@@ -24,6 +38,7 @@ export default function StoxaApp() {
   const [errorMsg, setErrorMsg] = useState("");
   const [showImpressum, setShowImpressum] = useState(false);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
+  const [suggestions, setSuggestions] = useState<{ symbol: string; name: string }[]>([]);
 
   const [assetData, setAssetData] = useState<AssetDetail>({
     symbol: "NVDA",
@@ -35,11 +50,34 @@ export default function StoxaApp() {
     history: []
   });
 
+  // Autocomplete Filter
+  useEffect(() => {
+    if (query.trim().length < 1) {
+      setSuggestions([]);
+      return;
+    }
+    const filtered = SEARCH_DIRECTORY.filter(item => 
+      item.symbol.toLowerCase().includes(query.toLowerCase()) || 
+      item.name.toLowerCase().includes(query.toLowerCase())
+    );
+    setSuggestions(filtered);
+  }, [query]);
+
   const handleSelectAsset = useCallback((tickerSymbol: string) => {
-    const clean = tickerSymbol.toUpperCase().trim();
+    let clean = tickerSymbol.toUpperCase().trim();
+    
+    // Intelligentes Mapping falls jemand z.B. "GOOGLE" eintippt
+    if (clean === "GOOGLE" || clean === "ALPHABET") clean = "GOOGL";
+    if (clean === "BITCOIN") clean = "BTC-USD";
+    if (clean === "APPLE") clean = "AAPL";
+    if (clean === "TESLA") clean = "TSLA";
+    if (clean === "MICROSOFT") clean = "MSFT";
+    if (clean === "NVIDIA") clean = "NVDA";
+
     if (clean) {
       setSelectedTicker(clean);
       setQuery("");
+      setSuggestions([]);
       setErrorMsg("");
     }
   }, []);
@@ -54,7 +92,7 @@ export default function StoxaApp() {
       try {
         const res = await fetch(`/api/history?symbol=${encodeURIComponent(selectedTicker)}&timeframe=${timeframe}`);
         if (!res.ok) {
-          throw new Error('Asset not found.');
+          throw new Error('Asset not found or invalid ticker.');
         }
         const data = await res.json();
         
@@ -173,9 +211,9 @@ export default function StoxaApp() {
         <div className="bg-white border border-black/[0.06] rounded-3xl p-6 shadow-xl shadow-black/[0.02] relative">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
             
-            {/* Search Input */}
+            {/* Smart Search Input with Autocomplete Dropdown */}
             <div className="relative">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[#86868b] mb-2">Search Asset (Ticker + Enter)</label>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#86868b] mb-2">Search Asset (Name or Ticker)</label>
               <div className="relative">
                 <Search className="absolute left-4 top-3.5 w-5 h-5 text-slate-400" />
                 <input 
@@ -188,13 +226,30 @@ export default function StoxaApp() {
                     }
                   }}
                   className="w-full bg-[#f5f5f7] border border-black/10 rounded-2xl pl-12 pr-4 py-3 text-lg font-medium text-[#1d1d1f] placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-all"
-                  placeholder="e.g. AAPL, TSLA, BTC-USD, VOW3.DE..."
+                  placeholder="e.g. Google, AAPL, Tesla, BTC..."
                 />
               </div>
+
+              {/* Autocomplete Suggestions Dropdown */}
+              {suggestions.length > 0 && (
+                <div className="absolute left-0 right-0 mt-2 bg-white border border-black/[0.08] rounded-2xl shadow-2xl z-50 overflow-hidden">
+                  {suggestions.map((item) => (
+                    <div
+                      key={item.symbol}
+                      onPointerDown={() => handleSelectAsset(item.symbol)}
+                      className="w-full px-5 py-3 text-left hover:bg-blue-50/60 flex items-center justify-between border-b border-black/[0.03] last:border-none cursor-pointer transition-colors"
+                    >
+                      <span className="font-semibold text-[#1d1d1f]">{item.name}</span>
+                      <span className="text-xs px-2.5 py-1 rounded-lg bg-slate-100 text-blue-600 font-bold">{item.symbol}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {errorMsg && <p className="text-xs text-rose-500 mt-1.5">{errorMsg}</p>}
 
               <div className="flex gap-2 mt-2.5 flex-wrap">
-                {["NVDA", "AAPL", "TSLA", "BTC-USD", "MSFT", "AMZN", "VOW3.DE"].map((t) => (
+                {["NVDA", "AAPL", "GOOGL", "TSLA", "BTC-USD", "MSFT"].map((t) => (
                   <button 
                     key={t}
                     onClick={() => handleSelectAsset(t)}
@@ -380,66 +435,66 @@ export default function StoxaApp() {
       )}
 
       {/* LEGAL & IMPRINT MODAL */}
-{showImpressum && (
-  <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div className="bg-white border border-black/10 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5">
-      
-      <div className="flex items-center justify-between border-b border-black/5 pb-4">
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="w-5 h-5 text-blue-600" />
-          <h3 className="font-semibold text-lg text-[#1d1d1f]">Legal & Privacy</h3>
+      {showImpressum && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-black/10 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+            
+            <div className="flex items-center justify-between border-b border-black/5 pb-4">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-blue-600" />
+                <h3 className="font-semibold text-lg text-[#1d1d1f]">Legal & Privacy</h3>
+              </div>
+              <button onClick={() => setShowImpressum(false)} className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs text-[#1d1d1f] leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
+              <div>
+                <h4 className="font-semibold text-slate-900 mb-1">Provider Identification</h4>
+                <p className="text-slate-600">
+                  {SITE_CONFIG.owner.name}<br />
+                  {SITE_CONFIG.owner.street}<br />
+                  {SITE_CONFIG.owner.city}<br />
+                  {SITE_CONFIG.owner.country}
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-slate-900 mb-1">Contact</h4>
+                <p className="text-slate-600">
+                  Email: <a href={`mailto:${SITE_CONFIG.owner.email}`} className="text-blue-600 hover:underline">{SITE_CONFIG.owner.email}</a><br />
+                  Website: <a href={`https://${SITE_CONFIG.domain}`} className="text-blue-600 hover:underline">www.{SITE_CONFIG.domain}</a>
+                </p>
+              </div>
+
+              <div className="pt-2 border-t border-black/5">
+                <h4 className="font-semibold text-slate-900 mb-1">Privacy Policy</h4>
+                <p className="text-slate-600 leading-normal">
+                  {SITE_CONFIG.privacyText}
+                </p>
+              </div>
+
+              <div className="pt-2 border-t border-black/5">
+                <h4 className="font-semibold text-slate-900 mb-1">Disclaimer</h4>
+                <p className="text-[#86868b] leading-normal">
+                  {SITE_CONFIG.disclaimer}
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <button 
+                onClick={() => setShowImpressum(false)}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-xl text-xs transition-colors shadow-md shadow-blue-600/20"
+              >
+                Close
+              </button>
+            </div>
+
+          </div>
         </div>
-        <button onClick={() => setShowImpressum(false)} className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500">
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-
-      <div className="space-y-4 text-xs text-[#1d1d1f] leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
-        <div>
-          <h4 className="font-semibold text-slate-900 mb-1">Provider Identification</h4>
-          <p className="text-slate-600">
-            {SITE_CONFIG.owner.name}<br />
-            {SITE_CONFIG.owner.street}<br />
-            {SITE_CONFIG.owner.city}<br />
-            {SITE_CONFIG.owner.country}
-          </p>
-        </div>
-
-        <div>
-          <h4 className="font-semibold text-slate-900 mb-1">Contact</h4>
-          <p className="text-slate-600">
-            Email: <a href={`mailto:${SITE_CONFIG.owner.email}`} className="text-blue-600 hover:underline">{SITE_CONFIG.owner.email}</a><br />
-            Website: <a href={`https://${SITE_CONFIG.domain}`} className="text-blue-600 hover:underline">www.{SITE_CONFIG.domain}</a>
-          </p>
-        </div>
-
-        <div className="pt-2 border-t border-black/5">
-          <h4 className="font-semibold text-slate-900 mb-1">Privacy Policy</h4>
-          <p className="text-slate-600 leading-normal">
-            {SITE_CONFIG.privacyText}
-          </p>
-        </div>
-
-        <div className="pt-2 border-t border-black/5">
-          <h4 className="font-semibold text-slate-900 mb-1">Disclaimer</h4>
-          <p className="text-[#86868b] leading-normal">
-            {SITE_CONFIG.disclaimer}
-          </p>
-        </div>
-      </div>
-
-      <div className="pt-2">
-        <button 
-          onClick={() => setShowImpressum(false)}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-xl text-xs transition-colors shadow-md shadow-blue-600/20"
-        >
-          Close
-        </button>
-      </div>
-
-    </div>
-  </div>
-)}
+      )}
 
     </div>
   );

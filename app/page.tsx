@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Activity, ArrowUpRight, ArrowDownRight, Search, Loader2, X, ShieldCheck, HelpCircle } from 'lucide-react';
+import { TrendingUp, Activity, ArrowUpRight, ArrowDownRight, Search, Loader2, X, ShieldCheck, HelpCircle, Sun, Moon } from 'lucide-react';
 import { SITE_CONFIG } from './config/site';
 
 interface AssetDetail {
@@ -25,6 +25,9 @@ export default function StoxaApp() {
   const [showImpressum, setShowImpressum] = useState(false);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   
+  // Theme State (Dark / Light)
+  const [darkMode, setDarkMode] = useState(false);
+
   // Live Search States
   const [suggestions, setSuggestions] = useState<{ symbol: string; name: string; exchange: string }[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -39,7 +42,32 @@ export default function StoxaApp() {
     history: []
   });
 
-  // LIVE SEARCH DEBOUNCE EFFECT (Fragt bei jedem Tippen global an)
+  // Dark Mode Auto-Detection & Toggle Sync
+  useEffect(() => {
+    const isDark = localStorage.getItem('stoxa-theme') === 'dark' ||
+      (!('stoxa-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    
+    setDarkMode(isDark);
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
+  const toggleDarkMode = () => {
+    if (darkMode) {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('stoxa-theme', 'light');
+      setDarkMode(false);
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('stoxa-theme', 'dark');
+      setDarkMode(true);
+    }
+  };
+
+  // LIVE SEARCH DEBOUNCE EFFECT
   useEffect(() => {
     if (query.trim().length < 2) {
       setSuggestions([]);
@@ -57,7 +85,7 @@ export default function StoxaApp() {
       } finally {
         setIsSearching(false);
       }
-    }, 300); // 300ms Verzögerung zum Schutz vor zu vielen Requests
+    }, 300);
 
     return () => clearTimeout(timer);
   }, [query]);
@@ -150,10 +178,10 @@ export default function StoxaApp() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] font-sans selection:bg-blue-500/25 relative">
+    <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#0b0f17] text-[#1d1d1f] dark:text-slate-100 font-sans selection:bg-blue-500/25 transition-colors duration-200 relative">
       
       {/* Header */}
-      <header className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between border-b border-black/[0.06]">
+      <header className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between border-b border-black/[0.06] dark:border-white/10">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-600/25">
             <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -164,24 +192,33 @@ export default function StoxaApp() {
           </div>
 
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-[#1d1d1f]">stoxa<span className="text-blue-600">.co</span></h1>
-            <p className="text-xs text-[#86868b]">Predictive Financial Intelligence</p>
+            <h1 className="text-xl font-bold tracking-tight text-[#1d1d1f] dark:text-white">stoxa<span className="text-blue-600 dark:text-blue-400">.co</span></h1>
+            <p className="text-xs text-[#86868b] dark:text-slate-400">Predictive Financial Intelligence</p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Dark Mode Toggle Button */}
+          <button
+            onClick={toggleDarkMode}
+            className="p-2 rounded-full bg-white dark:bg-slate-800 border border-black/[0.08] dark:border-slate-700 text-[#1d1d1f] dark:text-slate-200 hover:border-black/30 dark:hover:border-slate-500 shadow-sm transition-all"
+            title="Toggle Theme"
+          >
+            {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
+          </button>
+
           <button 
             onClick={() => setShowHowItWorks(true)}
-            className="text-xs font-medium px-3 py-1.5 rounded-full bg-white border border-black/[0.08] text-[#1d1d1f] hover:border-black/30 shadow-sm flex items-center gap-1.5 transition-all"
+            className="text-xs font-medium px-3 py-1.5 rounded-full bg-white dark:bg-slate-800 border border-black/[0.08] dark:border-slate-700 text-[#1d1d1f] dark:text-slate-200 hover:border-black/30 dark:hover:border-slate-500 shadow-sm flex items-center gap-1.5 transition-all"
           >
-            <HelpCircle className="w-3.5 h-3.5 text-blue-600" />
+            <HelpCircle className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
             <span>How it works</span>
           </button>
 
-          <div className="text-xs font-medium px-3.5 py-1.5 rounded-full bg-white border border-black/[0.08] text-[#1d1d1f] shadow-sm hidden sm:flex items-center gap-2">
+          <div className="text-xs font-medium px-3.5 py-1.5 rounded-full bg-white dark:bg-slate-800 border border-black/[0.08] dark:border-slate-700 text-[#1d1d1f] dark:text-slate-200 shadow-sm hidden sm:flex items-center gap-2">
             {loading ? (
               <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600 dark:text-blue-400" />
                 <span>Loading Market Feed...</span>
               </>
             ) : (
@@ -198,12 +235,12 @@ export default function StoxaApp() {
       <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">
         
         {/* Search & Control Box */}
-        <div className="bg-white border border-black/[0.06] rounded-3xl p-6 shadow-xl shadow-black/[0.02] relative">
+        <div className="bg-white dark:bg-[#161e2e] border border-black/[0.06] dark:border-slate-800 rounded-3xl p-6 shadow-xl shadow-black/[0.02] dark:shadow-none relative">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
             
-            {/* Live Global Search Input */}
+            {/* Live Search Input */}
             <div className="relative">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[#86868b] mb-2">Search Any Global Asset</label>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#86868b] dark:text-slate-400 mb-2">Search Any Global Asset</label>
               <div className="relative">
                 <Search className="absolute left-4 top-3.5 w-5 h-5 text-slate-400" />
                 <input 
@@ -217,28 +254,28 @@ export default function StoxaApp() {
                       handleSelectAsset(query);
                     }
                   }}
-                  className="w-full bg-[#f5f5f7] border border-black/10 rounded-2xl pl-12 pr-10 py-3 text-lg font-medium text-[#1d1d1f] placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-all"
+                  className="w-full bg-[#f5f5f7] dark:bg-slate-900 border border-black/10 dark:border-slate-700 rounded-2xl pl-12 pr-10 py-3 text-lg font-medium text-[#1d1d1f] dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-all"
                   placeholder="e.g. General Motors, Apple, BMW..."
                 />
                 {isSearching && (
-                  <Loader2 className="absolute right-4 top-4 w-5 h-5 animate-spin text-blue-600" />
+                  <Loader2 className="absolute right-4 top-4 w-5 h-5 animate-spin text-blue-600 dark:text-blue-400" />
                 )}
               </div>
 
-              {/* Live Autocomplete Dropdown */}
+              {/* Autocomplete Dropdown */}
               {suggestions.length > 0 && (
-                <div className="absolute left-0 right-0 mt-2 bg-white border border-black/[0.08] rounded-2xl shadow-2xl z-50 overflow-hidden">
+                <div className="absolute left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-black/[0.08] dark:border-slate-700 rounded-2xl shadow-2xl z-50 overflow-hidden">
                   {suggestions.map((item) => (
                     <div
                       key={item.symbol}
                       onPointerDown={() => handleSelectAsset(item.symbol)}
-                      className="w-full px-5 py-3 text-left hover:bg-blue-50/60 flex items-center justify-between border-b border-black/[0.03] last:border-none cursor-pointer transition-colors"
+                      className="w-full px-5 py-3 text-left hover:bg-blue-50/60 dark:hover:bg-slate-700/60 flex items-center justify-between border-b border-black/[0.03] dark:border-slate-700/50 last:border-none cursor-pointer transition-colors"
                     >
                       <div>
-                        <div className="font-semibold text-[#1d1d1f] text-sm">{item.name}</div>
-                        <div className="text-[10px] text-[#86868b]">{item.exchange}</div>
+                        <div className="font-semibold text-[#1d1d1f] dark:text-slate-100 text-sm">{item.name}</div>
+                        <div className="text-[10px] text-[#86868b] dark:text-slate-400">{item.exchange}</div>
                       </div>
-                      <span className="text-xs px-2.5 py-1 rounded-lg bg-slate-100 text-blue-600 font-bold">{item.symbol}</span>
+                      <span className="text-xs px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-900 text-blue-600 dark:text-blue-400 font-bold">{item.symbol}</span>
                     </div>
                   ))}
                 </div>
@@ -251,7 +288,7 @@ export default function StoxaApp() {
                   <button 
                     key={t}
                     onClick={() => handleSelectAsset(t)}
-                    className={`text-xs px-3 py-1.5 rounded-xl border transition-all ${selectedTicker === t ? 'bg-blue-50 border-blue-600 text-blue-600 font-semibold shadow-sm' : 'bg-white border-black/10 text-[#86868b] hover:border-black/30'}`}
+                    className={`text-xs px-3 py-1.5 rounded-xl border transition-all ${selectedTicker === t ? 'bg-blue-50 dark:bg-blue-950/50 border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400 font-semibold shadow-sm' : 'bg-white dark:bg-slate-800 border-black/10 dark:border-slate-700 text-[#86868b] dark:text-slate-400 hover:border-black/30 dark:hover:border-slate-500'}`}
                   >
                     {t}
                   </button>
@@ -262,8 +299,8 @@ export default function StoxaApp() {
             {/* Horizon Slider */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-[#86868b]">Symmetrical Horizon</label>
-                <span className="text-sm font-bold text-blue-600">{timeframe} Months ({(timeframe/12).toFixed(1)} Years)</span>
+                <label className="text-xs font-semibold uppercase tracking-wider text-[#86868b] dark:text-slate-400">Symmetrical Horizon</label>
+                <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{timeframe} Months ({(timeframe/12).toFixed(1)} Years)</span>
               </div>
               <input 
                 type="range" 
@@ -271,9 +308,9 @@ export default function StoxaApp() {
                 max="24" 
                 value={timeframe} 
                 onChange={(e) => setTimeframe(Number(e.target.value))}
-                className="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
+                className="w-full accent-blue-600 dark:accent-blue-500 h-2 bg-slate-200 dark:bg-slate-700 rounded-lg cursor-pointer"
               />
-              <div className="flex justify-between text-[11px] text-[#86868b] mt-2">
+              <div className="flex justify-between text-[11px] text-[#86868b] dark:text-slate-400 mt-2">
                 <span>3 Months</span>
                 <span>12 Months (1 Y.)</span>
                 <span>24 Months (2 Y.)</span>
@@ -284,20 +321,20 @@ export default function StoxaApp() {
         </div>
 
         {/* Asset Overview Bar */}
-        <div className="bg-white border border-black/[0.06] rounded-2xl px-6 py-4 flex items-center justify-between shadow-sm">
+        <div className="bg-white dark:bg-[#161e2e] border border-black/[0.06] dark:border-slate-800 rounded-2xl px-6 py-4 flex items-center justify-between shadow-sm">
           <div>
-            <h2 className="text-xl font-bold text-[#1d1d1f]">{assetData.name} <span className="text-[#86868b] font-normal text-base">({assetData.symbol})</span></h2>
-            <p className="text-xs text-[#86868b]">
-              Hist. Volatility: <span className="font-semibold text-slate-700">{(assetData.vol * 100).toFixed(1)}%</span> | 
-              CAGR Trend: <span className="font-semibold text-slate-700">{(assetData.trend * 100).toFixed(1)}%</span> | 
-              Max Drawdown: <span className="font-semibold text-slate-700">{(assetData.maxDD * 100).toFixed(1)}%</span>
+            <h2 className="text-xl font-bold text-[#1d1d1f] dark:text-white">{assetData.name} <span className="text-[#86868b] dark:text-slate-400 font-normal text-base">({assetData.symbol})</span></h2>
+            <p className="text-xs text-[#86868b] dark:text-slate-400">
+              Hist. Volatility: <span className="font-semibold text-slate-700 dark:text-slate-200">{(assetData.vol * 100).toFixed(1)}%</span> | 
+              CAGR Trend: <span className="font-semibold text-slate-700 dark:text-slate-200">{(assetData.trend * 100).toFixed(1)}%</span> | 
+              Max Drawdown: <span className="font-semibold text-slate-700 dark:text-slate-200">{(assetData.maxDD * 100).toFixed(1)}%</span>
             </p>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-[#1d1d1f]">
+            <div className="text-2xl font-bold text-[#1d1d1f] dark:text-white">
               ${assetData.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
-            <div className="text-xs text-emerald-600 font-semibold flex items-center justify-end gap-1">
+            <div className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center justify-end gap-1">
               <Activity className="w-3.5 h-3.5" /> Live Benchmark Active
             </div>
           </div>
@@ -305,69 +342,75 @@ export default function StoxaApp() {
 
         {/* 3 SCENARIO CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white border border-black/[0.06] hover:border-emerald-500/50 rounded-2xl p-5 shadow-sm transition-all">
+          <div className="bg-white dark:bg-[#161e2e] border border-black/[0.06] dark:border-slate-800 hover:border-emerald-500/50 rounded-2xl p-5 shadow-sm transition-all">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-600">Bull Scenario</span>
-              <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Bull Scenario</span>
+              <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                 <ArrowUpRight className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-[#1d1d1f] mb-1.5">${bullTarget.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-            <div className="inline-block px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-600 text-xs font-semibold">
+            <div className="text-2xl font-bold text-[#1d1d1f] dark:text-white mb-1.5">${bullTarget.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <div className="inline-block px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
               +{bullPct.toFixed(1)}% Expected Gain
             </div>
           </div>
 
-          <div className="bg-white border border-black/[0.06] hover:border-blue-500/50 rounded-2xl p-5 shadow-sm transition-all">
+          <div className="bg-white dark:bg-[#161e2e] border border-black/[0.06] dark:border-slate-800 hover:border-blue-500/50 rounded-2xl p-5 shadow-sm transition-all">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-blue-600">Base Scenario</span>
-              <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+              <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Base Scenario</span>
+              <div className="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-600 dark:text-blue-400">
                 <TrendingUp className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-[#1d1d1f] mb-1.5">${baseTarget.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-            <div className="inline-block px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 text-xs font-semibold">
+            <div className="text-2xl font-bold text-[#1d1d1f] dark:text-white mb-1.5">${baseTarget.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <div className="inline-block px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 text-xs font-semibold">
               {basePct >= 0 ? '+' : ''}{basePct.toFixed(1)}% Trend Projection
             </div>
           </div>
 
-          <div className="bg-white border border-black/[0.06] hover:border-rose-500/50 rounded-2xl p-5 shadow-sm transition-all">
+          <div className="bg-white dark:bg-[#161e2e] border border-black/[0.06] dark:border-slate-800 hover:border-rose-500/50 rounded-2xl p-5 shadow-sm transition-all">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-rose-600">Bear Scenario</span>
-              <div className="w-7 h-7 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600">
+              <span className="text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">Bear Scenario</span>
+              <div className="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-950/50 flex items-center justify-center text-rose-600 dark:text-rose-400">
                 <ArrowDownRight className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-[#1d1d1f] mb-1.5">${bearTarget.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-            <div className="inline-block px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 text-xs font-semibold">
+            <div className="text-2xl font-bold text-[#1d1d1f] dark:text-white mb-1.5">${bearTarget.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <div className="inline-block px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 text-xs font-semibold">
               {bearPct.toFixed(1)}% Stress Drawdown
             </div>
           </div>
         </div>
 
         {/* Chart Section */}
-        <div className="bg-white border border-black/[0.06] rounded-3xl p-6 shadow-xl shadow-black/[0.02]">
+        <div className="bg-white dark:bg-[#161e2e] border border-black/[0.06] dark:border-slate-800 rounded-3xl p-6 shadow-xl shadow-black/[0.02] dark:shadow-none">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-[#86868b]">Asset Scenario Corridor ({timeframe}M Symmetrical)</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-[#86868b] dark:text-slate-400">Asset Scenario Corridor ({timeframe}M Symmetrical)</h3>
             <div className="flex items-center gap-4 text-xs font-medium">
-              <span className="flex items-center gap-1.5 text-slate-700"><span className="w-2 h-2 rounded-full bg-slate-800"></span> History</span>
-              <span className="flex items-center gap-1.5 text-emerald-600"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Bull Case</span>
-              <span className="flex items-center gap-1.5 text-blue-600"><span className="w-2 h-2 rounded-full bg-blue-600"></span> Base Case</span>
-              <span className="flex items-center gap-1.5 text-rose-600"><span className="w-2 h-2 rounded-full bg-rose-500"></span> Bear Case</span>
+              <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300"><span className="w-2 h-2 rounded-full bg-slate-800 dark:bg-slate-200"></span> History</span>
+              <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Bull Case</span>
+              <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400"><span className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-400"></span> Base Case</span>
+              <span className="flex items-center gap-1.5 text-rose-600 dark:text-rose-400"><span className="w-2 h-2 rounded-full bg-rose-500"></span> Bear Case</span>
             </div>
           </div>
 
           <div className="h-[400px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={formattedChartData}>
-                <XAxis dataKey="label" stroke="#86868b" fontSize={11} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-                <YAxis stroke="#86868b" fontSize={12} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
+                <XAxis dataKey="label" stroke={darkMode ? "#64748b" : "#86868b"} fontSize={11} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                <YAxis stroke={darkMode ? "#64748b" : "#86868b"} fontSize={12} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#ffffff', borderColor: 'rgba(0,0,0,0.1)', borderRadius: '12px', color: '#1d1d1f', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
+                  contentStyle={{ 
+                    backgroundColor: darkMode ? '#1e293b' : '#ffffff', 
+                    borderColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', 
+                    borderRadius: '12px', 
+                    color: darkMode ? '#f8fafc' : '#1d1d1f', 
+                    boxShadow: '0 10px 25px rgba(0,0,0,0.2)' 
+                  }}
                 />
-                <Line type="monotone" dataKey="Historical" stroke="#1d1d1f" strokeWidth={1.8} dot={false} connectNulls />
+                <Line type="monotone" dataKey="Historical" stroke={darkMode ? "#f8fafc" : "#1d1d1f"} strokeWidth={1.8} dot={false} connectNulls />
                 <Line type="monotone" dataKey="Bull" stroke="#10b981" strokeWidth={1.8} strokeDasharray="4 4" dot={false} connectNulls />
-                <Line type="monotone" dataKey="Base" stroke="#2563eb" strokeWidth={1.8} strokeDasharray="4 4" dot={false} connectNulls />
+                <Line type="monotone" dataKey="Base" stroke="#3b82f6" strokeWidth={1.8} strokeDasharray="4 4" dot={false} connectNulls />
                 <Line type="monotone" dataKey="Bear" stroke="#f43f5e" strokeWidth={1.8} strokeDasharray="4 4" dot={false} connectNulls />
               </LineChart>
             </ResponsiveContainer>
@@ -375,14 +418,14 @@ export default function StoxaApp() {
         </div>
 
         {/* Footer */}
-        <footer className="pt-6 pb-8 border-t border-black/[0.06] flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#86868b]">
+        <footer className="pt-6 pb-8 border-t border-black/[0.06] dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#86868b] dark:text-slate-500">
           <div>
             {SITE_CONFIG.name} is a predictive financial simulation engine for educational & research purposes.
           </div>
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setShowImpressum(true)} 
-              className="hover:text-blue-600 font-medium transition-colors underline underline-offset-4"
+              className="hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors underline underline-offset-4"
             >
               Legal & Imprint
             </button>
@@ -395,29 +438,29 @@ export default function StoxaApp() {
 
       {/* HOW IT WORKS MODAL */}
       {showHowItWorks && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-black/10 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-black/5 pb-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 border border-black/10 dark:border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+            <div className="flex items-center justify-between border-b border-black/5 dark:border-slate-800 pb-4">
               <div className="flex items-center gap-2">
-                <HelpCircle className="w-5 h-5 text-blue-600" />
-                <h3 className="font-semibold text-lg text-[#1d1d1f]">How Stoxa.co Works</h3>
+                <HelpCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <h3 className="font-semibold text-lg text-[#1d1d1f] dark:text-white">How Stoxa.co Works</h3>
               </div>
-              <button onClick={() => setShowHowItWorks(false)} className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500">
+              <button onClick={() => setShowHowItWorks(false)} className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-4 text-xs text-slate-600 leading-relaxed">
+            <div className="space-y-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
               <div>
-                <h4 className="font-semibold text-slate-900 mb-1">1. Symmetrical 50/50 Layout</h4>
+                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">1. Symmetrical 50/50 Layout</h4>
                 <p>The chart is split exactly 1:1. The left side reflects real daily historical market data matching your selected horizon. The right side forecasts future performance symmetrically.</p>
               </div>
               <div>
-                <h4 className="font-semibold text-slate-900 mb-1">2. Dynamic Volatility & Trend</h4>
+                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">2. Dynamic Volatility & Trend</h4>
                 <p>Stoxa computes real annualized volatility ($\sigma$) and CAGR trend metrics dynamically from each asset's past trading history to project realistic upper (Bull) and lower (Bear) boundaries.</p>
               </div>
               <div>
-                <h4 className="font-semibold text-slate-900 mb-1">3. Universal Live Search</h4>
+                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">3. Universal Live Search</h4>
                 <p>Type any company name or ticker globally (e.g. "General Motors", "Walmart") to instantly query live market listings.</p>
               </div>
             </div>
@@ -434,23 +477,23 @@ export default function StoxaApp() {
 
       {/* LEGAL & IMPRINT MODAL */}
       {showImpressum && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-black/10 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 border border-black/10 dark:border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5">
             
-            <div className="flex items-center justify-between border-b border-black/5 pb-4">
+            <div className="flex items-center justify-between border-b border-black/5 dark:border-slate-800 pb-4">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-blue-600" />
-                <h3 className="font-semibold text-lg text-[#1d1d1f]">Legal & Privacy</h3>
+                <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <h3 className="font-semibold text-lg text-[#1d1d1f] dark:text-white">Legal & Privacy</h3>
               </div>
-              <button onClick={() => setShowImpressum(false)} className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500">
+              <button onClick={() => setShowImpressum(false)} className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-4 text-xs text-[#1d1d1f] leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
+            <div className="space-y-4 text-xs text-[#1d1d1f] dark:text-slate-200 leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
               <div>
-                <h4 className="font-semibold text-slate-900 mb-1">Provider Identification</h4>
-                <p className="text-slate-600">
+                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">Provider Identification</h4>
+                <p className="text-slate-600 dark:text-slate-400">
                   {SITE_CONFIG.owner.name}<br />
                   {SITE_CONFIG.owner.street}<br />
                   {SITE_CONFIG.owner.city}<br />
@@ -459,23 +502,23 @@ export default function StoxaApp() {
               </div>
 
               <div>
-                <h4 className="font-semibold text-slate-900 mb-1">Contact</h4>
-                <p className="text-slate-600">
-                  Email: <a href={`mailto:${SITE_CONFIG.owner.email}`} className="text-blue-600 hover:underline">{SITE_CONFIG.owner.email}</a><br />
-                  Website: <a href={`https://${SITE_CONFIG.domain}`} className="text-blue-600 hover:underline">www.{SITE_CONFIG.domain}</a>
+                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">Contact</h4>
+                <p className="text-slate-600 dark:text-slate-400">
+                  Email: <a href={`mailto:${SITE_CONFIG.owner.email}`} className="text-blue-600 dark:text-blue-400 hover:underline">{SITE_CONFIG.owner.email}</a><br />
+                  Website: <a href={`https://${SITE_CONFIG.domain}`} className="text-blue-600 dark:text-blue-400 hover:underline">www.{SITE_CONFIG.domain}</a>
                 </p>
               </div>
 
-              <div className="pt-2 border-t border-black/5">
-                <h4 className="font-semibold text-slate-900 mb-1">Privacy Policy</h4>
-                <p className="text-slate-600 leading-normal">
+              <div className="pt-2 border-t border-black/5 dark:border-slate-800">
+                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">Privacy Policy</h4>
+                <p className="text-slate-600 dark:text-slate-400 leading-normal">
                   {SITE_CONFIG.privacyText}
                 </p>
               </div>
 
-              <div className="pt-2 border-t border-black/5">
-                <h4 className="font-semibold text-slate-900 mb-1">Disclaimer</h4>
-                <p className="text-[#86868b] leading-normal">
+              <div className="pt-2 border-t border-black/5 dark:border-slate-800">
+                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">Disclaimer</h4>
+                <p className="text-[#86868b] dark:text-slate-400 leading-normal">
                   {SITE_CONFIG.disclaimer}
                 </p>
               </div>

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Activity, ArrowUpRight, ArrowDownRight, Sparkles, Search, Loader2 } from 'lucide-react';
+import { TrendingUp, Activity, ArrowUpRight, ArrowDownRight, Search, Loader2, X, ShieldCheck } from 'lucide-react';
 
 interface AssetDetail {
   symbol: string;
@@ -21,6 +21,8 @@ export default function StoxaApp() {
   
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [showImpressum, setShowImpressum] = useState(false); // Modal State for Impressum
+
   const [assetData, setAssetData] = useState<AssetDetail>({
     symbol: "NVDA",
     name: "NVIDIA Corp.",
@@ -40,7 +42,7 @@ export default function StoxaApp() {
     }
   }, []);
 
-  // API Abfrage mit dynamischem timeframe & metrischen Daten
+  // API Abfrage mit dynamischem timeframe
   useEffect(() => {
     let isMounted = true;
 
@@ -70,16 +72,11 @@ export default function StoxaApp() {
     return () => { isMounted = false; };
   }, [selectedTicker, timeframe]);
 
-  // ECHTE DYNAMISCHE SZENARIO-BERECHNUNG JE ASSET
+  // Dynamische Szenario-Berechnung
   const timeFactor = timeframe / 12.0;
 
-  // Bull: Trend + Volatilitätsschub
   const bullTarget = assetData.currentPrice * (1 + (Math.max(assetData.trend, 0.08) * timeFactor) + (assetData.vol * 0.5 * Math.sqrt(timeFactor)));
-  
-  // Base: Reiner Jahrestrend (CAGR)
   const baseTarget = assetData.currentPrice * (1 + (assetData.trend * timeFactor));
-  
-  // Bear: Maximum Drawdown Stress-Test
   const bearTarget = Math.max(assetData.currentPrice * (1 + (assetData.maxDD * Math.sqrt(timeFactor))), 1.0);
 
   const bullPct = ((bullTarget - assetData.currentPrice) / assetData.currentPrice) * 100;
@@ -97,7 +94,6 @@ export default function StoxaApp() {
     Bear: null
   }));
 
-  // Anknüpfpunkt "Heute"
   if (formattedChartData.length > 0) {
     const last = formattedChartData[formattedChartData.length - 1];
     last.Bull = assetData.currentPrice;
@@ -105,7 +101,6 @@ export default function StoxaApp() {
     last.Bear = assetData.currentPrice;
   }
 
-  // Zukunfts-Schritte (Exakt 50/50)
   const futureSteps = Math.max(historyPoints.length, 10);
   const currentDate = new Date();
 
@@ -125,29 +120,37 @@ export default function StoxaApp() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] font-sans selection:bg-blue-500/25">
+    <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] font-sans selection:bg-blue-500/25 relative">
       
-      {/* Header */}
+      {/* Header mit neuem SVG-Logo */}
       <header className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between border-b border-black/[0.06]">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center shadow-md shadow-blue-600/20">
-            <Sparkles className="w-5 h-5 text-white" />
+          
+          {/* Custom SVG Logo */}
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-600/25">
+            <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 18L9 13L13 16L20 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M16 8H20V12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M4 13L9 8L13 11L20 3" stroke="currentColor" strokeWidth="1.5" strokeDasharray="2 2" strokeOpacity="0.6"/>
+            </svg>
           </div>
+
           <div>
-            <h1 className="text-xl font-semibold tracking-tight text-[#1d1d1f]">stoxa<span className="text-blue-600">.co</span></h1>
+            <h1 className="text-xl font-bold tracking-tight text-[#1d1d1f]">stoxa<span className="text-blue-600">.co</span></h1>
             <p className="text-xs text-[#86868b]">Predictive Financial Intelligence</p>
           </div>
         </div>
-        <div className="text-xs font-medium px-3 py-1.5 rounded-full bg-white border border-black/[0.08] text-[#1d1d1f] shadow-sm flex items-center gap-2">
+
+        <div className="text-xs font-medium px-3.5 py-1.5 rounded-full bg-white border border-black/[0.08] text-[#1d1d1f] shadow-sm flex items-center gap-2">
           {loading ? (
             <>
               <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
-              <span>Berechne Volatilität & Trends...</span>
+              <span>Lade Börsendaten...</span>
             </>
           ) : (
             <>
               <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span>Dynamic Financial Engine Active</span>
+              <span>Financial Engine Active</span>
             </>
           )}
         </div>
@@ -310,11 +313,41 @@ export default function StoxaApp() {
           </div>
         </div>
 
-        <div className="text-center text-xs text-[#86868b] pt-4 border-t border-black/[0.06]">
-          Stoxa.co is a predictive financial simulation engine for educational & research purposes. Not financial advice.
-        </div>
+        {/* Footer mit Impressum-Link */}
+        <footer className="pt-6 pb-8 border-t border-black/[0.06] flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#86868b]">
+          <div>
+            Stoxa.co is a predictive financial simulation engine for educational & research purposes.
+          </div>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setShowImpressum(true)} 
+              className="hover:text-blue-600 font-medium transition-colors underline underline-offset-4"
+            >
+              Impressum & Rechtliches
+            </button>
+            <span>•</span>
+            <span>© {new Date().getFullYear()} Stoxa Inc.</span>
+          </div>
+        </footer>
 
       </main>
-    </div>
-  );
-}
+
+      {/* IMPRESSUM MODAL POPUP */}
+      {showImpressum && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-black/10 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in duration-150">
+            
+            <div className="flex items-center justify-between border-b border-black/5 pb-4">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-blue-600" />
+                <h3 className="font-semibold text-lg text-[#1d1d1f]">Impressum & Anbieterkennzeichnung</h3>
+              </div>
+              <button 
+                onClick={() => setShowImpressum(false)}
+                className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs text-[#1d1d1f] leading-relaxed max-h-[60vh] overflow-y

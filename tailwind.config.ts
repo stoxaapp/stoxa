@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  darkMode: 'class', // <--- DAS ist der entscheidende Schalter!
+  darkMode: 'class', // Das aktiviert die Steuerung über die .dark Klasse am HTML-Tag
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Activity, ArrowUpRight, ArrowDownRight, Search, Loader2, X, ShieldCheck, HelpCircle, Sun, Moon, Newspaper, ExternalLink, Sparkles, ShieldAlert, AlertTriangle } from 'lucide-react';
+import { TrendingUp, Activity, ArrowUpRight, ArrowDownRight, Search, Loader2, X, ShieldCheck, HelpCircle, Sun, Moon, Newspaper, ExternalLink, Sparkles, ShieldAlert } from 'lucide-react';
 import { SITE_CONFIG } from './config/site';
 
 interface AssetDetail {
@@ -396,7 +396,7 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
           </div>
         </div>
 
-        {/* DYNAMISCHE KACHEL MIT INTEGRATION DES VOLATILITÄTS-SCORES */}
+        {/* DYNAMISCHE KACHEL MIT INTEGRATION DES SCORES IM FLIESSTEXT */}
         <div className="bg-white dark:bg-[#161e2e] border border-black/[0.06] dark:border-slate-800 rounded-3xl p-6 shadow-xl shadow-black/[0.02] dark:shadow-none space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-black/[0.04] dark:border-slate-800">
             <div className="flex items-center gap-2">
@@ -418,14 +418,12 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
           </div>
           
           <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-            <strong className="text-[#1d1d1f] dark:text-white font-semibold">{assetData.name} ({assetData.symbol})</strong> shows an annualized historical volatility of <span className="font-semibold text-slate-800 dark:text-slate-200">{(assetData.vol * 100).toFixed(1)}%</span> and a CAGR trend metric of <span className="font-semibold text-slate-800 dark:text-slate-200">{(assetData.trend * 100).toFixed(1)}%</span>. 
+            <strong className="text-[#1d1d1f] dark:text-white font-semibold">{assetData.name} ({assetData.symbol})</strong> is currently classified within a <strong className="text-slate-800 dark:text-slate-200">{volCategory.label}</strong> with a quantitative Volatility Score of <strong className="text-slate-800 dark:text-slate-200">{volScore}/100</strong>. 
+            The asset exhibits an annualized historical volatility of <span className="font-semibold text-slate-800 dark:text-slate-200">{(assetData.vol * 100).toFixed(1)}%</span> and a CAGR trend metric of <span className="font-semibold text-slate-800 dark:text-slate-200">{(assetData.trend * 100).toFixed(1)}%</span>. 
             Over the selected <span className="font-semibold text-slate-800 dark:text-slate-200">{timeframe}-month horizon</span>, Stoxa models a Base projection target of <strong className="text-blue-600 dark:text-blue-400">${baseTarget.toFixed(2)}</strong> ({basePct >= 0 ? '+' : ''}{basePct.toFixed(1)}%). 
-            Under high-momentum Bull scenarios, upper target bounds reach <strong className="text-emerald-600 dark:text-emerald-400">${bullTarget.toFixed(2)}</strong> (+{bullPct.toFixed(1)}%), while Bear stress testing indicates a lower support level around <strong className="text-rose-600 dark:text-rose-400">${bearTarget.toFixed(2)}</strong> ({bearPct.toFixed(1)}%).
+            Under high-momentum Bull scenarios, upper target bounds reach <strong className="text-emerald-600 dark:text-emerald-400">${bullTarget.toFixed(2)}</strong> (+{bullPct.toFixed(1)}%), while Bear stress testing indicates a lower support level around <strong className="text-rose-600 dark:text-rose-400">${bearTarget.toFixed(2)}</strong> ({bearPct.toFixed(1)}%). 
+            <span className="block mt-2 italic text-slate-500 dark:text-slate-400">Model Characterization: {volCategory.desc}</span>
           </p>
-
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 italic bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-black/[0.03] dark:border-slate-800/60">
-            <strong>Model Insight:</strong> {volCategory.desc}
-          </div>
         </div>
 
         {/* 3 SCENARIO CARDS */}

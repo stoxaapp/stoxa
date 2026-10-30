@@ -268,7 +268,7 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
 
           <button 
             onClick={() => setShowHowItWorks(true)}
-            className="text-xs font-medium px-3 py-1.5 rounded-full bg-white dark:bg-slate-800 border border-black/[0.08] dark:border-slate-700 text-[#1d1d1f] dark:text-slate-200 hover:border-black/30 dark:hover:border-slate-500 shadow-sm flex items-center gap-1.5 transition-all"
+            className="text-xs font-medium px-3 py-1.5 rounded-full bg-white dark:bg-slate-800 border border-black/[0.08] dark:border-slate-700 text-[#1d1d1f] dark:text-slate-200 hover:border-black/30 dark:hover:border-slate-500 shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <HelpCircle className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
             <span>How it works</span>
@@ -345,7 +345,7 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
                   <button 
                     key={t}
                     onClick={() => handleSelectAsset(t)}
-                    className={`text-xs px-3 py-1.5 rounded-xl border transition-all ${selectedTicker === t ? 'bg-blue-50 dark:bg-blue-950/50 border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400 font-semibold shadow-sm' : 'bg-white dark:bg-slate-800 border-black/10 dark:border-slate-700 text-[#86868b] dark:text-slate-400 hover:border-black/30 dark:hover:border-slate-500'}`}
+                    className={`text-xs px-3 py-1.5 rounded-xl border transition-all cursor-pointer ${selectedTicker === t ? 'bg-blue-50 dark:bg-blue-950/50 border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400 font-semibold shadow-sm' : 'bg-white dark:bg-slate-800 border-black/10 dark:border-slate-700 text-[#86868b] dark:text-slate-400 hover:border-black/30 dark:hover:border-slate-500'}`}
                   >
                     {t}
                   </button>
@@ -388,7 +388,6 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
           </div>
 
           <div className="flex items-center gap-4 justify-between md:justify-end">
-            {/* ⚡ AI Quick Briefing Button links neben dem aktuellen Preis */}
             <AIQuickBriefing 
               ticker={assetData.symbol} 
               volatilityScore={volScore} 
@@ -612,7 +611,7 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setShowImpressum(true)} 
-              className="hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors underline underline-offset-4"
+              className="hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors underline underline-offset-4 cursor-pointer"
             >
               Legal & Imprint
             </button>
@@ -623,57 +622,52 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
 
       </main>
 
-    {/* HOW IT WORKS MODAL */}
+      {/* HOW IT WORKS MODAL */}
       {showHowItWorks && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border border-black/10 dark:border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-black/5 dark:border-slate-800 pb-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="relative w-full max-w-lg max-h-[85vh] bg-white dark:bg-[#161e2e] border border-black/[0.08] dark:border-slate-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-[#1d1d1f] dark:text-slate-100">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-black/[0.06] dark:border-slate-800 bg-slate-50/80 dark:bg-[#161e2e]/80">
               <div className="flex items-center gap-2">
                 <HelpCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                <h3 className="font-semibold text-lg text-[#1d1d1f] dark:text-white">How Stoxa.co Works</h3>
+                <h3 className="font-bold text-base">How Stoxa.co Works</h3>
               </div>
-              <button onClick={() => setShowHowItWorks(false)} className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">
+              <button 
+                onClick={() => setShowHowItWorks(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-100 hover:bg-black/5 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
-
-            <div className="space-y-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
+            <div className="p-6 overflow-y-auto space-y-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              <p>
+                <strong className="text-[#1d1d1f] dark:text-white">Stoxa.co</strong> is a professional financial simulation engine built for predictive modeling, historical volatility tracking, and interactive stress-testing.
+              </p>
               <div>
-                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">1. Symmetrical 50/50 Layout</h4>
-                <p>The chart is split exactly 1:1. The left side reflects real daily historical market data matching your selected time horizon (3 to 24 months). The right side forecasts future performance symmetrically over the exact same period.</p>
+                <strong className="block text-[#1d1d1f] dark:text-white mb-1">1. Symmetrical Corridor Modeling</strong>
+                Instead of rigid, single-point price predictions, Stoxa utilizes symmetrical historical volatility ($\sigma$) and CAGR trends to project probabilistic Bull, Base, and Bear scenario bands over your chosen timeframe.
               </div>
-
               <div>
-                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">2. Volatility & CAGR Trend Engine</h4>
-                <p>Stoxa computes real annualized volatility (&sigma;) and Compound Annual Growth Rate (CAGR) metrics dynamically from each asset's historical trading data to project mathematically balanced upper (Bull), base, and lower (Bear) scenario boundaries.</p>
+                <strong className="block text-[#1d1d1f] dark:text-white mb-1">2. Quantitative Volatility Scores</strong>
+                Our proprietary algorithm weighs historical standard deviations and maximum drawdowns to rate assets from defensive low-risk to high-dispersion profiles on a 0–100 scale.
               </div>
-
               <div>
-                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">3. Volatility Score & Briefing</h4>
-                <p>Each asset is assigned a calculated Volatility Score (0–100) based on historical variance and scenario dispersion, categorizing assets into Low, Moderate, or High Volatility corridors for quick risk profile assessment.</p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">4. Live Context & Headlines</h4>
-                <p>Directly beneath the corridor forecast, Stoxa integrates a real-time news feed providing publisher headlines and context on catalysts driving price movement for the selected ticker.</p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-slate-900 dark:text-white mb-1">5. Universal Live Search</h4>
-                <p>Type any global company name or ticker symbol (e.g., "General Motors", "Apple", "Bitcoin") to instantly query live market listings and launch a simulation.</p>
+                <strong className="block text-[#1d1d1f] dark:text-white mb-1">3. AI-First Intelligence Briefings</strong>
+                Instantly generate real-time algorithmic summaries and key risk-reward metrics on-demand via the Quick Briefing engine, maintaining a lightning-fast client-side architecture.
               </div>
             </div>
-
-            <button 
-              onClick={() => setShowHowItWorks(false)}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-xl text-xs transition-colors shadow-md shadow-blue-600/20"
-            >
-              Got it
-            </button>
+            <div className="px-6 py-3 bg-slate-50 dark:bg-slate-950 border-t border-black/[0.06] dark:border-slate-800 flex justify-end">
+              <button
+                onClick={() => setShowHowItWorks(false)}
+                className="px-4 py-2 bg-black dark:bg-slate-800 text-white text-xs font-medium rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                Got it
+              </button>
+            </div>
           </div>
         </div>
       )}
-{/* IMPRESSUM / LEGAL MODAL */}
+
+      {/* IMPRESSUM / LEGAL MODAL */}
       {showImpressum && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="relative w-full max-w-lg max-h-[85vh] bg-white dark:bg-[#161e2e] border border-black/[0.08] dark:border-slate-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-[#1d1d1f] dark:text-slate-100">

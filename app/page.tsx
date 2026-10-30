@@ -235,8 +235,6 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
     });
   }
 
-  let uniqueMonthCount = 0;
-
   return (
     <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#0b0f17] text-[#1d1d1f] dark:text-slate-100 font-sans selection:bg-blue-500/25 transition-colors duration-200 relative">
       
@@ -260,7 +258,7 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
         <div className="flex items-center gap-3">
           <button
             onClick={toggleDarkMode}
-            className="p-2 rounded-full bg-white dark:bg-slate-800 border border-black/[0.08] dark:border-slate-700 text-[#1d1d1f] dark:text-slate-200 hover:border-black/30 dark:hover:border-slate-500 shadow-sm transition-all"
+            className="p-2 rounded-full bg-white dark:bg-slate-800 border border-black/[0.08] dark:border-slate-700 text-[#1d1d1f] dark:text-slate-200 hover:border-black/30 dark:hover:border-slate-500 shadow-sm transition-all cursor-pointer"
             title="Toggle Theme"
           >
             {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
@@ -376,7 +374,7 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
           </div>
         </div>
 
-        {/* Asset Overview Bar mit integriertem AI Quick Briefing Button */}
+        {/* Asset Overview Bar */}
         <div className="bg-white dark:bg-[#161e2e] border border-black/[0.06] dark:border-slate-800 rounded-2xl px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
           <div>
             <h2 className="text-xl font-bold text-[#1d1d1f] dark:text-white">{assetData.name} <span className="text-[#86868b] dark:text-slate-400 font-normal text-base">({assetData.symbol})</span></h2>
@@ -408,7 +406,7 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
           </div>
         </div>
 
-        {/* DYNAMISCHE KACHEL MIT INTEGRATION DES SCORES IM FLIESSTEXT */}
+        {/* SCENARIO INTELLIGENCE BRIEFING */}
         <div className="bg-white dark:bg-[#161e2e] border border-black/[0.06] dark:border-slate-800 rounded-3xl p-6 shadow-xl shadow-black/[0.02] dark:shadow-none space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-black/[0.04] dark:border-slate-800">
             <div className="flex items-center gap-2">
@@ -420,7 +418,6 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
               </h3>
             </div>
 
-            {/* VOLATILITY PROFILE BADGE */}
             <div className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-2 w-fit ${volCategory.color}`}>
               <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
               <span>{volCategory.label}</span>
@@ -492,36 +489,22 @@ export default function StoxaApp({ initialTicker = "NVDA" }: { initialTicker?: s
             </div>
           </div>
 
+          {/* Wrapper mit horizontalem Scrollen für kleine Displays */}
           <div className="w-full overflow-x-auto pb-2">
-            <div className="h-[380px] min-w-[550px] w-full">
+            <div className="h-[380px] min-w-[650px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={formattedChartData}>
+                <LineChart data={formattedChartData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
                   <XAxis 
                     dataKey="label" 
                     stroke={darkMode ? "#64748b" : "#86868b"} 
-                    fontSize={11} 
+                    fontSize={10} 
                     tickLine={false} 
                     axisLine={false} 
-                    interval={0}
-                    tickFormatter={(value, index) => {
-                      if (index === 0) {
-                        uniqueMonthCount = 0;
-                        return value;
-                      }
-                      const prevValue = formattedChartData[index - 1]?.label;
-                      const isNewMonth = value !== prevValue;
-                      
-                      if (isNewMonth) {
-                        uniqueMonthCount++;
-                        const step = timeframe > 18 ? 3 : timeframe > 12 ? 2 : 1;
-                        if (uniqueMonthCount % step === 0) {
-                          return value;
-                        }
-                      }
-                      return '';
-                    }}
+                    interval="preserveStartEnd"
+                    minTickGap={35}
+                    dy={8}
                   />
-                  <YAxis stroke={darkMode ? "#64748b" : "#86868b"} fontSize={12} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
+                  <YAxis stroke={darkMode ? "#64748b" : "#86868b"} fontSize={11} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: darkMode ? '#1e293b' : '#ffffff', 
